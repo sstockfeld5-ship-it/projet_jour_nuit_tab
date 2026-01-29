@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Module : Ombres et Rotation - Version Finale Mobile</title>
+    <title>Module : Ombres et Rotation - Version Finale Ombre Marquée</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root { 
@@ -70,7 +70,7 @@
         .responsive-grid { display: flex; flex-wrap: wrap; gap: 20px; align-items: start; }
         .responsive-grid > * { flex: 1 1 300px; min-width: 280px; max-width: 100%; }
 
-        /* Q2 Specifique - CALAGE PARFAIT */
+        /* Q2 Specifique */
         .dropzone { 
             position: absolute; width: 22%; height: 12%; 
             border: 2px dashed var(--high-vis); background: rgba(255, 215, 0, 0.1); 
@@ -78,9 +78,8 @@
             font-size: 0.8em; text-align: center; line-height: 1.1;
         }
         #dz_portee { top: 52%; left: 15%; width: 25%; }
-        /* Décalage léger gauche (46%) */
+        /* Décalage à 46% */
         #dz_propre { top: 38%; left: 46%; width: 22%; } 
-        /* Décalage léger gauche (73%) */
         #dz_eclairee { top: 38%; left: 73%; width: 22%; }
 
         .chip { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; background: #1a1f2e; color: var(--ink); font-weight: 700; font-size: 13px; cursor: grab; touch-action: none; border: 1px solid rgba(255,255,255,0.2); margin: 5px; user-select: none; }
@@ -107,22 +106,19 @@
         
         .scene { width: 100%; display: flex; justify-content: center; overflow: hidden; padding: 10px 0; }
         
-        /* FOND BLEU */
-        .globe { max-width: 280px; width: 80vw; aspect-ratio: 1/1; border-radius: 50%; position:relative; overflow:hidden; background:#2a7be6; border:2px solid rgba(255,255,255,.2); box-shadow:0 20px 60px rgba(0,0,0,.5); }
+        .globe { max-width: 300px; width: 80vw; aspect-ratio: 1/1; border-radius: 50%; position:relative; overflow:hidden; background:#2a7be6; border:2px solid rgba(255,255,255,.2); box-shadow:0 20px 60px rgba(0,0,0,.5); }
         .q7earth { position:relative; width:220px; height:220px; border-radius:50%; overflow:hidden; border:2px solid rgba(255,255,255,.2); box-shadow:0 0 50px rgba(0,0,0,.8); background:#2a7be6; z-index:5; }
 
         .q7stage { position:relative; width:100%; height:320px; display:flex; justify-content:center; align-items:center; overflow:hidden; background: #000; border-radius:12px; border:1px solid #333; }
         .q7sun { position:absolute; left:-40px; top:50%; transform:translateY(-50%); width:120px; height:120px; border-radius:50%; background:radial-gradient(circle,#ffe9a3,#f59e0b 70%); box-shadow:0 0 40px rgba(245,158,11,.6); z-index:2; }
         
-        /* Texture */
         .bg-map { position:absolute; inset:-10%; width:140%; height:120%; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1024' height='512' viewBox='0 0 1024 512'><rect width='1024' height='512' fill='%232a7be6'/><path d='M150,260 C220,210 280,210 330,250 C350,275 360,315 330,340 C290,375 235,382 200,350 C175,330 150,310 135,295 Z' fill='%2363c76a' opacity='0.9'/><path d='M610,255 C650,220 720,220 770,255 C800,275 805,315 775,335 C720,368 655,360 628,330 C610,312 595,285 600,272 Z' fill='%2363c76a' opacity='0.9'/></svg>"); background-size: 200% 100%; background-repeat: repeat-x; background-position: var(--bx, 0%) 50%; filter: saturate(1.2) contrast(1.1); }
         .overlay-shine { position:absolute; inset:0; background:radial-gradient(circle at 30% 40%, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 60%); mix-blend-mode:overlay; pointer-events:none; z-index: 6; }
         
-        /* OMBRE MARQUÉE ET NETTE */
+        /* CORRECTION : Ombre plus marquée (0.75) */
         .overlay-night { 
             position:absolute; inset:0; 
-            /* Gradient sec à 50%, très noir (0.9) */
-            background: linear-gradient(to right, transparent 50%, rgba(0,0,0,0.9) 50%); 
+            background: linear-gradient(to right, transparent 49.5%, rgba(0,0,0,0.75) 50.5%); 
             pointer-events:none; z-index: 30; mix-blend-mode: multiply; 
         }
         
@@ -133,10 +129,31 @@
         
         .q7marker { position:absolute; width:14px; height:14px; border-radius:50%; background:#ff4d8d; box-shadow:0 0 0 3px #fff; transform:translate(-50%,-50%); z-index:10; }
 
-        /* VILLES (z-index < ombre) */
         .city, .q10-point { position:absolute; width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 3px rgba(0,0,0,.35); transform: translate(-50%,-50%); z-index:15; }
         .city { background: #ef4444; }
         .city::after, .q10-point::after { content: attr(data-label); position:absolute; left: 14px; top: -6px; font-weight:950; font-size:12px; color:#fff; white-space:nowrap; text-shadow: 0 2px 8px rgba(0,0,0,.85); }
+        
+        /* ===== CSS IMPORTÉ DE INDEX.HTML POUR Q9 ===== */
+        #step9 .q10-grid{ display:grid; grid-template-columns: 1.05fr 1fr; gap:14px; align-items:start; }
+        #step9 .q10-toprow{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:10px; }
+        #step9 .q10-pill{ padding:7px 10px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); font-weight:900; font-size:13px; }
+        #step9 .q10-scene{ display:flex; align-items:center; justify-content:center; gap:22px; padding:10px 0 6px; }
+        #step9 .q10-sun{ width:150px; height:150px; border-radius:50%; background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.95) 0%, rgba(255,232,168,.92) 18%, rgba(255,193,7,.85) 45%, rgba(255,152,0,.70) 70%, rgba(255,152,0,.35) 100%); filter: drop-shadow(0 16px 40px rgba(255,193,7,.25)); }
+        #step9 .q10-earth{ width:240px; height:240px; border-radius:50%; position:relative; overflow:hidden; background:#071027; border:1px solid rgba(255,255,255,.14); box-shadow:0 20px 60px rgba(0,0,0,.35); }
+        #step9 .q10-tex{ position:absolute; inset:0; border-radius:50%; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1024' height='512' viewBox='0 0 1024 512'><defs><linearGradient id='sea' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%232a7be6'/><stop offset='1' stop-color='%230a3b7a'/></linearGradient></defs><rect width='1024' height='512' fill='url(%23sea)'/><g opacity='0.22' fill='white'><ellipse cx='140' cy='90' rx='100' ry='40'/><ellipse cx='250' cy='140' rx='140' ry='52'/><ellipse cx='740' cy='110' rx='150' ry='52'/><ellipse cx='890' cy='170' rx='130' ry='48'/></g><g fill='%233bbf6a'><path d='M160,265 C230,210 300,210 350,255 C372,280 380,325 350,352 C305,390 245,395 208,358 C180,335 155,312 142,298 Z'/><path d='M430,195 C495,160 575,170 620,208 C652,235 660,272 625,295 C570,333 498,326 465,292 C445,270 420,238 415,223 Z'/><path d='M635,255 C680,218 755,220 810,258 C840,278 848,320 815,340 C755,376 685,368 655,336 C635,315 620,285 625,270 Z'/></g></svg>"); background-size:200% 100%; background-repeat:repeat-x; background-position: var(--bx, 0%) 50%; transform: translateZ(0); }
+        #step9 .q10-sphere{ position:absolute; inset:0; border-radius:50%; pointer-events:none; background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.28) 0%, rgba(255,255,255,.10) 35%, rgba(255,255,255,0) 62%), radial-gradient(circle at 70% 75%, rgba(0,0,0,.10) 0%, rgba(0,0,0,.25) 55%, rgba(0,0,0,.40) 78%, rgba(0,0,0,.50) 100%); mix-blend-mode:multiply; }
+        #step9 .q10-daynight{ position:absolute; inset:0; border-radius:50%; pointer-events:none; background: linear-gradient(to right, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.05) 35%, rgba(0,0,0,0.70) 52%, rgba(0,0,0,0.92) 68%, rgba(0,0,0,0.98) 100%); mix-blend-mode:multiply; }
+        #step9 .q10-point{ position:absolute; width:12px; height:12px; border-radius:50%; background:#111827; border:2px solid #fff; box-shadow:0 0 0 3px rgba(0,0,0,.35); transform: translate(-50%,-50%); z-index:6; }
+        #step9 .q10-point::after{ content: attr(data-label); position:absolute; left: 14px; top: -6px; font-weight:950; font-size:12px; color:#fff; white-space:nowrap; text-shadow: 0 2px 8px rgba(0,0,0,.85); }
+        #step9 .q10-controls{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-start; margin-top:10px; }
+        #step9 .q10-q{ margin:10px 0; padding:10px; border-radius:14px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.10); }
+        #step9 .q10-qtitle{ font-weight:950; margin-bottom:4px; }
+        #step9 .q10-mini{ opacity:.9; font-size:14px; margin-bottom:8px; }
+        #step9 .q10-row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:6px 0; }
+        #step9 .q10-lbl{ width:70px; font-weight:900; }
+        #step9 .q10-choice{ display:block; margin:6px 0; font-weight:800; }
+        #step9 .q10-res{ margin-top:10px; font-weight:950; }
+        #step9 .q10-terminator{ position:absolute; top:0; bottom:0; left:50%; width:0; border-left:2px dashed rgba(255,255,255,0.7); pointer-events:none; z-index:5; }
         
         .q10-grid { display: grid; gap: 20px; }
         svg { width: 100%; height: auto; display: block; }
@@ -345,8 +362,6 @@
                 <div class="scene">
                     <div class="globe" id="globeQ7">
                         <div class="bg-map" id="q8tex"></div>
-                        <div class="city" id="q8madrid" data-label="Madrid"></div>
-                        <div class="city" id="q8sydney" data-label="Sydney"></div>
                         <div class="overlay-night"></div>
                     </div>
                 </div>
@@ -384,40 +399,63 @@
 </div>
 
 <div id="step9" class="step-content">
-    <div class="card">
-        <h2>Question 9 – Situations 1 et 2</h2>
-        <div class="responsive-grid">
-            <div class="anim-wrap" style="height:auto; min-height:auto; padding:15px; background:#000;">
-                <div class="q10-toprow" style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <div id="q10State" style="background:#333; padding:5px 10px; border-radius:10px;">Situation 1</div>
-                    <div id="q10Time">t = 0 h</div>
-                </div>
-                <div class="q10-scene" style="display:flex; justify-content:center; align-items:center; gap:20px;">
-                    <div class="q10-sun" style="width:80px; height:80px; background:yellow; border-radius:50%;"></div>
-                    <div class="globe" id="q10Earth">
-                        <div class="bg-map" id="q10Tex"></div>
-                        <div class="q10-point" id="q10A" data-label="A" style="background:red;"></div>
-                        <div class="q10-point" id="q10B" data-label="B" style="background:red;"></div>
-                        <div class="q10-point" id="q10C" data-label="C" style="background:red;"></div>
-                        <div class="overlay-night"></div> 
-                    </div>
-                </div>
-                <div class="controls" style="margin-top:15px; justify-content:center;">
-                    <button class="btn" id="q10Plus6">+6 h</button>
-                    <button class="btn" id="q10Plus24">+24 h</button>
-                    <button class="btn" id="q10Reset">Retour</button>
-                </div>
+    <div id="s9" class="card">
+      <div class="q10-consigne">
+        <strong>Consigne :</strong> Observe la <strong>situation 1</strong>. Clique ensuite sur <strong>+6 h</strong> pour passer à la <strong>situation 2</strong>.
+        Détermine si les points <strong>A</strong>, <strong>B</strong> et <strong>C</strong> sont le <strong>jour</strong> (côté éclairé) ou la <strong>nuit</strong> (côté sombre).
+      </div>
+      <div class="q10-grid">
+        <div class="q10-anim card">
+          <div class="q10-toprow">
+            <div class="q10-pill" id="q10State">Situation 1</div>
+            <div class="q10-pill" id="q10Time">t = 0 h</div>
+          </div>
+          <div class="q10-scene">
+            <div class="q10-sun"></div>
+            <div class="q10-earthWrap">
+              <div class="q10-earth" id="q10Earth">
+                <div class="q10-tex" id="q10Tex"></div>
+                <div class="q10-sphere"></div>
+                <div class="q10-daynight"></div>
+                <div class="q10-point" id="q10A" data-label="A"></div>
+                <div class="q10-point" id="q10B" data-label="B"></div>
+                <div class="q10-point" id="q10C" data-label="C"></div>
+              </div>
+              <div class="q10-earthLabel">Terre</div>
             </div>
-            
-            <div class="q10-qcm">
-                <div class="q"><strong>Situation 1</strong><br>A: <label><input type="radio" name="q10_s1_a" value="jour">J</label> <label><input type="radio" name="q10_s1_a" value="nuit">N</label></div>
-                <div class="q">B: <label><input type="radio" name="q10_s1_b" value="jour">J</label> <label><input type="radio" name="q10_s1_b" value="nuit">N</label></div>
-                <div class="q"><strong>Situation 2 (+6h)</strong><br>A: <label><input type="radio" name="q10_s2_a" value="jour">J</label> <label><input type="radio" name="q10_s2_a" value="nuit">N</label></div>
-                <button class="btn primary" id="q10Check" style="margin-top:15px; width:100%;">Corriger</button>
-                <div id="q10Res" style="margin-top:10px; font-weight:bold;"></div>
-                <button class="btn ok" style="margin-top:20px; width:100%;" onclick="showStep(10)">Vers la synthèse →</button>
-            </div>
+          </div>
+          <div class="q10-controls">
+            <button class="btn" id="q10Plus6">+6 h</button>
+            <button class="btn" id="q10Reset">Retour Situation 1</button>
+          </div>
         </div>
+        <div class="q10-qcm card">
+          <div style="font-weight:900; margin-bottom:6px">Questions</div>
+          <div class="q10-q">
+            <div class="q10-qtitle">10.1 – Situation 1 (t = 0 h)</div>
+            <div class="q10-mini">Indique si chaque point est <strong>Jour</strong> ou <strong>Nuit</strong>.</div>
+            <div class="q10-row"><div class="q10-lbl">Point A</div><label><input type="radio" name="q10_s1_a" value="jour"> Jour</label><label><input type="radio" name="q10_s1_a" value="nuit"> Nuit</label></div>
+            <div class="q10-row"><div class="q10-lbl">Point B</div><label><input type="radio" name="q10_s1_b" value="jour"> Jour</label><label><input type="radio" name="q10_s1_b" value="nuit"> Nuit</label></div>
+            <div class="q10-row"><div class="q10-lbl">Point C</div><label><input type="radio" name="q10_s1_c" value="jour"> Jour</label><label><input type="radio" name="q10_s1_c" value="nuit"> Nuit</label></div>
+          </div>
+          <div class="q10-q">
+            <div class="q10-qtitle">10.2 – Situation 2 (6 h plus tard)</div>
+            <div class="q10-mini">Après <strong>+6 h</strong>, indique à nouveau <strong>Jour</strong> ou <strong>Nuit</strong>.</div>
+            <div class="q10-row"><div class="q10-lbl">Point A</div><label><input type="radio" name="q10_s2_a" value="jour"> Jour</label><label><input type="radio" name="q10_s2_a" value="nuit"> Nuit</label></div>
+            <div class="q10-row"><div class="q10-lbl">Point B</div><label><input type="radio" name="q10_s2_b" value="jour"> Jour</label><label><input type="radio" name="q10_s2_b" value="nuit"> Nuit</label></div>
+            <div class="q10-row"><div class="q10-lbl">Point C</div><label><input type="radio" name="q10_s2_c" value="jour"> Jour</label><label><input type="radio" name="q10_s2_c" value="nuit"> Nuit</label></div>
+          </div>
+          <div class="q10-q">
+            <div class="q10-qtitle">10.3 – Retour à la position initiale</div>
+            <div class="q10-mini">Au bout de combien de temps les points retrouveront-ils la position de la Situation 1 ?</div>
+            <label class="q10-choice"><input type="radio" name="q10_tour" value="24"> 24 h</label>
+            <label class="q10-choice"><input type="radio" name="q10_tour" value="12"> 12 h</label>
+          </div>
+          <button class="btn primary" id="q10Check">Corriger</button>
+          <div id="q10Res" class="q10-res"></div>
+          <button class="btn ok" style="margin-top:20px; width:100%;" onclick="showStep(10)">Vers la synthèse →</button>
+        </div>
+      </div>
     </div>
 </div>
 
@@ -461,10 +499,6 @@
         setTimeout(() => { 
             if(n===1) onResize1(); 
             if(n===2) onResize2(); 
-            if(n===7) { /* Force update Q7 */
-                const el=document.getElementById('q8madrid');
-                if(el) initQ7(); // Re-init pour être sûr
-            }
         }, 100);
     }
 
@@ -581,72 +615,81 @@
     function addMod(d){ var r=document.getElementById('modHour'); r.value=(Number(r.value)+d)%25; setModHour(r.value); }
     function checkQ6() { var r=document.querySelector('input[name="q6"]:checked'), fb=document.getElementById('fb6'); fb.style.display="block"; fb.innerHTML=(r && r.value==="jour_nuit")?"✅ CORRECT !":"❌ FAUX."; fb.style.color=(r && r.value==="jour_nuit")?"#4ade80":"#f87171"; }
 
-    // --- Q7: RECALCUL RESPONSIVE ET BOUCLE NON-BLOQUANTE ---
-    function updateCitiesPos(containerId, cities) {
-        const container = document.getElementById(containerId);
-        if(!container) return;
-        const w = container.offsetWidth; 
-        const R = w / 2; // Le rayon est la moitié de la largeur réelle
-        if(w === 0) return; // Eviter division par 0 ou position hors champ
+    // --- Q7 IMPORTÉ DU INDEX.HTML ---
+    function initQ7(){
+      const tex = document.getElementById('q8tex');
+      const madrid = document.getElementById('q8madrid');
+      const sydney = document.getElementById('q8sydney');
+      const speedLbl = document.getElementById('q8speedLbl');
+      const startBtn = document.getElementById('q8startBtn');
+      const speed2Btn = document.getElementById('q8speed2Btn');
 
-        cities.forEach(c => {
-            if(!c.el) return;
-            const lat = c.lat * Math.PI/180;
-            const lon = (c.lon + (c.rot || 0)) * Math.PI/180;
-            const x = Math.cos(lat) * Math.sin(lon);
-            const y = Math.sin(lat);
-            const z = Math.cos(lat) * Math.cos(lon);
-            
-            // Projection
-            const px = R + R * x;
-            const py = R - R * y;
-            
-            c.el.style.left = px + 'px';
-            c.el.style.top = py + 'px';
-            
-            // Masquage si derrière
-            if(z < 0) { 
-                c.el.style.opacity = '0'; 
-            } else { 
-                c.el.style.opacity = '1'; 
-            }
-        });
-    }
+      if(!tex || !madrid || !sydney) return;
 
-    let q7Rot = 0; 
-    let q7Running = false;
-    let q7ReqId = null;
+      const R = 150, CX = 150, CY = 150;
+      const cities = [
+        { el: madrid, lat: 40.4, lon: -3.7 },
+        { el: sydney, lat: -33.9, lon: 151.2 }
+      ];
 
-    function loopQ7() {
-        if(q7Running) {
-            q7Rot = (q7Rot + 0.2) % 360; // Rotation continue
-            document.getElementById('q8tex').style.backgroundPosition = (-q7Rot) + '% 50%';
+      let running = false;
+      let speedMult = 1;     
+      const omega = 12;      
+      let rotDeg = 0;
+      let last = performance.now();
+
+      function project(latDeg, lonDeg){
+        const lat = latDeg * Math.PI/180;
+        const lon = lonDeg * Math.PI/180;
+        const x = Math.cos(lat) * Math.sin(lon);
+        const y = Math.sin(lat);
+        const z = Math.cos(lat) * Math.cos(lon);
+        const px = CX + R * x;
+        const py = CY - R * y;
+        return {px, py, z};
+      }
+
+      function render(){
+        const bx = (-(rotDeg/360)*100) % 100;
+        tex.style.setProperty('--bx', bx.toFixed(2) + '%');
+
+        for(const c of cities){
+          const lon = c.lon + rotDeg;
+          const p = project(c.lat, lon);
+          c.el.style.left = p.px.toFixed(1) + 'px';
+          c.el.style.top  = p.py.toFixed(1) + 'px';
+
+          if(p.z < 0){
+            c.el.style.opacity = '0.35';
+            c.el.style.filter = 'blur(0.8px)';
+          }else{
+            c.el.style.opacity = '1';
+            c.el.style.filter = 'none';
+          }
         }
-        
-        // Mettre à jour les villes A CHAQUE FRAME même si pas running (pour le resize)
-        const cities = [
-            { el: document.getElementById('q8madrid'), lat: 40.4, lon: -3.7, rot: q7Rot*3.6 },
-            { el: document.getElementById('q8sydney'), lat: -33.9, lon: 151.2, rot: q7Rot*3.6 }
-        ];
-        updateCitiesPos('globeQ7', cities);
+      }
 
-        q7ReqId = requestAnimationFrame(loopQ7);
-    }
+      function updateUI(){
+        if(speedLbl) speedLbl.textContent = 'Vitesse : ×' + speedMult;
+        if(startBtn) startBtn.textContent = running ? 'Pause' : 'Démarrer la rotation';
+      }
 
-    function initQ7() {
-        // Lancer la boucle une seule fois
-        if(!q7ReqId) {
-            loopQ7();
+      function tick(now){
+        const dt = (now - last)/900;
+        last = now;
+        if(running){
+          rotDeg = (rotDeg + omega * speedMult * dt) % 360;
+          render();
         }
-        
-        // Bouton Switch
-        const btn = document.getElementById('q8startBtn');
-        if(btn) {
-            btn.onclick = () => {
-                q7Running = !q7Running;
-                btn.textContent = q7Running ? "Pause" : "Démarrer";
-            };
-        }
+        requestAnimationFrame(tick);
+      }
+
+      if(startBtn) startBtn.addEventListener('click', ()=>{ running = !running; updateUI(); });
+      if(speed2Btn) speed2Btn.addEventListener('click', ()=>{ speedMult = (speedMult === 1) ? 2 : 1; updateUI(); });
+
+      render();
+      updateUI();
+      requestAnimationFrame(tick);
     }
     
     function corrigerQ8(){ var s=0; if(getChecked('q8q1')=='v')s++; if(getChecked('q8q2')=='f')s++; if(getChecked('q8q3')=='v')s++; document.getElementById('resQ8').textContent = (s===3) ? "✅ Bravo !" : "Score : "+s+"/3"; }
@@ -655,55 +698,98 @@
     function setT(t){ document.getElementById('tSel').textContent=t+' h'; document.getElementById('tG').setAttribute('transform','translate(380 130) rotate('+(t/24*360)+')'); }
     function checkT(){ var m=getChecked('m_t'), s=getChecked('s_t'); var ok = (document.getElementById('tSel').textContent.includes('0 h') && m=='jour' && s=='nuit'); document.getElementById('st8').innerHTML=ok?"✅ Correct":"❌ Vérifie 0h"; document.getElementById('st8').style.display='block'; }
 
-    // --- Q9 ---
-    let q9Rot = 0;
+    // --- Q9 IMPORTÉ DU INDEX.HTML ---
     function initQ9(){
-        const points = [
-            { el: document.getElementById('q10A'), lat: 30, lon: 140 },
-            { el: document.getElementById('q10B'), lat: -20, lon: -110 },
-            { el: document.getElementById('q10C'), lat: -25, lon: 50 }
-        ];
+      const tex = document.getElementById('q10Tex');
+      const elA = document.getElementById('q10A');
+      const elB = document.getElementById('q10B');
+      const elC = document.getElementById('q10C');
+      const lblState = document.getElementById('q10State');
+      const lblTime  = document.getElementById('q10Time');
+      const btnPlus6 = document.getElementById('q10Plus6');
+      const btnReset = document.getElementById('q10Reset');
+      const btnCheck = document.getElementById('q10Check');
+      const res = document.getElementById('q10Res');
 
-        function update(){
-            document.getElementById('q10Tex').style.backgroundPosition = (-q9Rot)+'% 50%';
-            points.forEach(p => p.rot = q9Rot * 3.6);
-            updateCitiesPos('q10Earth', points);
+      if(!tex) return; 
+
+      const R = 120, CX = 120, CY = 120;
+      const points = [
+        {name:'A', el: elA, lat: 30, lon: 140},
+        {name:'B', el: elB, lat: -20, lon: -110},
+        {name:'C', el: elC, lat: -25, lon: 50},
+      ];
+
+      let running = false;
+      let rotDeg = 0;
+      let hours = 0;
+
+      function setLabels(){
+        lblTime.textContent = 't = ' + hours + ' h';
+        lblState.textContent = (hours === 0) ? 'Situation 1' : 'Situation 2';
+      }
+
+      function project(latDeg, lonDeg){
+        const lat = latDeg * Math.PI/180;
+        const lon = lonDeg * Math.PI/180;
+        const x = Math.cos(lat) * Math.sin(lon);
+        const y = Math.sin(lat);
+        const z = Math.cos(lat) * Math.cos(lon);
+        const px = CX + R * x;
+        const py = CY - R * y;
+        return {px, py, z};
+      }
+
+      function placePoints(){
+        const bx = (-(rotDeg/360)*100) % 100;
+        tex.style.setProperty('--bx', bx.toFixed(2) + '%');
+
+        for(const p0 of points){
+          const lon = p0.lon + rotDeg;
+          const p = project(p0.lat, lon);
+          p0.el.style.left = p.px.toFixed(1) + 'px';
+          p0.el.style.top  = p.py.toFixed(1) + 'px';
+          p0.el.style.opacity = '1';
+          p0.el.style.filter = 'none';
+          const day = (p.px < CX);
+          p0.el.style.background = day ? '#22c55e' : '#111827';
         }
+      }
 
-        document.getElementById('q10Plus6').onclick = () => { q9Rot = 25; document.getElementById('q10Time').textContent='t = 6 h'; update(); }; 
-        document.getElementById('q10Plus24').onclick = () => { q9Rot = 0; document.getElementById('q10Time').textContent='t = 24 h'; update(); }; 
-        document.getElementById('q10Reset').onclick = () => { q9Rot = 0; document.getElementById('q10Time').textContent='t = 0 h'; update(); };
-        document.getElementById('q10Check').onclick = () => { document.getElementById('q10Res').textContent = "✅ Bravo !"; };
-        update();
+      function plus6h(){ hours = 6; rotDeg = (rotDeg + 90) % 360; setLabels(); placePoints(); }
+      function reset(){ hours = 0; rotDeg = 0; setLabels(); placePoints(); }
+
+      function corriger(){
+         let score = 0;
+         const getVal = (n) => { const el = document.querySelector('input[name="'+n+'"]:checked'); return el?el.value:null; };
+         if(getVal('q10_s1_a') === 'nuit') score++;
+         if(getVal('q10_s1_b') === 'jour') score++;
+         if(getVal('q10_s1_c') === 'nuit') score++;
+         if(getVal('q10_s2_a') === 'jour') score++;
+         if(getVal('q10_s2_b') === 'nuit') score++;
+         if(getVal('q10_s2_c') === 'nuit') score++;
+         if(getVal('q10_tour') === '24') score++;
+
+         if(score === 7) {
+             res.innerHTML = "✅ Bravo ! Tout est correct."; res.style.color = "#4ade80";
+         } else {
+             res.innerHTML = "❌ Tu as " + score + "/7 bonnes réponses."; res.style.color = "#f87171";
+         }
+      }
+
+      btnPlus6.onclick = plus6h;
+      btnReset.onclick = reset;
+      btnCheck.onclick = corriger;
+
+      setLabels();
+      placePoints();
     }
 
     function getChecked(n){ const e=document.querySelector('input[name="'+n+'"]:checked'); return e?e.value:null; }
-    
-    // Resize event pour recalculer les positions des villes responsive
     window.addEventListener('resize', () => { 
         if(typeof onResize1 === 'function') onResize1(); 
         if(typeof onResize2 === 'function') onResize2(); 
-        
-        // Force update Q7 static pos
-        if(document.getElementById('q8madrid')) {
-             const cities = [
-                { el: document.getElementById('q8madrid'), lat: 40.4, lon: -3.7, rot: q7Rot*3.6 },
-                { el: document.getElementById('q8sydney'), lat: -33.9, lon: 151.2, rot: q7Rot*3.6 }
-            ];
-            updateCitiesPos('globeQ7', cities);
-        }
-
-        // Force update Q9
-        if(document.getElementById('q10A')) {
-            const points = [
-                { el: document.getElementById('q10A'), lat: 30, lon: 140, rot: q9Rot*3.6 },
-                { el: document.getElementById('q10B'), lat: -20, lon: -110, rot: q9Rot*3.6 },
-                { el: document.getElementById('q10C'), lat: -25, lon: 50, rot: q9Rot*3.6 }
-            ];
-            updateCitiesPos('q10Earth', points);
-        }
     });
-
     window.onload = () => { showStep(1); };
 </script>
 </body>
