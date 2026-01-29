@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Module : Ombres et Rotation - Version Mobile Réparée</title>
+    <title>Module : Ombres et Rotation - Version Finale Mobile</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root { 
@@ -70,7 +70,7 @@
         .responsive-grid { display: flex; flex-wrap: wrap; gap: 20px; align-items: start; }
         .responsive-grid > * { flex: 1 1 300px; min-width: 280px; max-width: 100%; }
 
-        /* Q2 Specifique */
+        /* Q2 Specifique - CALAGE PARFAIT */
         .dropzone { 
             position: absolute; width: 22%; height: 12%; 
             border: 2px dashed var(--high-vis); background: rgba(255, 215, 0, 0.1); 
@@ -78,8 +78,9 @@
             font-size: 0.8em; text-align: center; line-height: 1.1;
         }
         #dz_portee { top: 52%; left: 15%; width: 25%; }
-        /* Décalage à 46% */
+        /* Décalage léger gauche (46%) */
         #dz_propre { top: 38%; left: 46%; width: 22%; } 
+        /* Décalage léger gauche (73%) */
         #dz_eclairee { top: 38%; left: 73%; width: 22%; }
 
         .chip { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; background: #1a1f2e; color: var(--ink); font-weight: 700; font-size: 13px; cursor: grab; touch-action: none; border: 1px solid rgba(255,255,255,0.2); margin: 5px; user-select: none; }
@@ -106,21 +107,22 @@
         
         .scene { width: 100%; display: flex; justify-content: center; overflow: hidden; padding: 10px 0; }
         
-        /* Globe avec fond bleu pour éviter les artefacts */
-        .globe { max-width: 300px; width: 80vw; aspect-ratio: 1/1; border-radius: 50%; position:relative; overflow:hidden; background:#2a7be6; border:2px solid rgba(255,255,255,.2); box-shadow:0 20px 60px rgba(0,0,0,.5); }
+        /* FOND BLEU */
+        .globe { max-width: 280px; width: 80vw; aspect-ratio: 1/1; border-radius: 50%; position:relative; overflow:hidden; background:#2a7be6; border:2px solid rgba(255,255,255,.2); box-shadow:0 20px 60px rgba(0,0,0,.5); }
         .q7earth { position:relative; width:220px; height:220px; border-radius:50%; overflow:hidden; border:2px solid rgba(255,255,255,.2); box-shadow:0 0 50px rgba(0,0,0,.8); background:#2a7be6; z-index:5; }
 
         .q7stage { position:relative; width:100%; height:320px; display:flex; justify-content:center; align-items:center; overflow:hidden; background: #000; border-radius:12px; border:1px solid #333; }
         .q7sun { position:absolute; left:-40px; top:50%; transform:translateY(-50%); width:120px; height:120px; border-radius:50%; background:radial-gradient(circle,#ffe9a3,#f59e0b 70%); box-shadow:0 0 40px rgba(245,158,11,.6); z-index:2; }
         
-        /* Texture sans zoom (100% 100%) pour faciliter le calcul de position */
-        .bg-map { position:absolute; inset:0; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1024' height='512' viewBox='0 0 1024 512'><rect width='1024' height='512' fill='%232a7be6'/><path d='M150,260 C220,210 280,210 330,250 C350,275 360,315 330,340 C290,375 235,382 200,350 C175,330 150,310 135,295 Z' fill='%2363c76a' opacity='0.9'/><path d='M610,255 C650,220 720,220 770,255 C800,275 805,315 775,335 C720,368 655,360 628,330 C610,312 595,285 600,272 Z' fill='%2363c76a' opacity='0.9'/></svg>"); background-size: 200% 100%; background-repeat: repeat-x; background-position: var(--bx, 0%) 50%; filter: saturate(1.2) contrast(1.1); }
+        /* Texture */
+        .bg-map { position:absolute; inset:-10%; width:140%; height:120%; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1024' height='512' viewBox='0 0 1024 512'><rect width='1024' height='512' fill='%232a7be6'/><path d='M150,260 C220,210 280,210 330,250 C350,275 360,315 330,340 C290,375 235,382 200,350 C175,330 150,310 135,295 Z' fill='%2363c76a' opacity='0.9'/><path d='M610,255 C650,220 720,220 770,255 C800,275 805,315 775,335 C720,368 655,360 628,330 C610,312 595,285 600,272 Z' fill='%2363c76a' opacity='0.9'/></svg>"); background-size: 200% 100%; background-repeat: repeat-x; background-position: var(--bx, 0%) 50%; filter: saturate(1.2) contrast(1.1); }
         .overlay-shine { position:absolute; inset:0; background:radial-gradient(circle at 30% 40%, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 60%); mix-blend-mode:overlay; pointer-events:none; z-index: 6; }
         
-        /* OMBRE : NETTE et LEGERE pour voir au travers */
+        /* OMBRE MARQUÉE ET NETTE */
         .overlay-night { 
             position:absolute; inset:0; 
-            background: linear-gradient(to right, transparent 49.5%, rgba(0,0,0,0.55) 50.5%); 
+            /* Gradient sec à 50%, très noir (0.9) */
+            background: linear-gradient(to right, transparent 50%, rgba(0,0,0,0.9) 50%); 
             pointer-events:none; z-index: 30; mix-blend-mode: multiply; 
         }
         
@@ -131,10 +133,9 @@
         
         .q7marker { position:absolute; width:14px; height:14px; border-radius:50%; background:#ff4d8d; box-shadow:0 0 0 3px #fff; transform:translate(-50%,-50%); z-index:10; }
 
-        /* POINTS ET VILLES */
-        .city, .q10-point { position:absolute; width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 3px rgba(0,0,0,.35); transform: translate(-50%,-50%); z-index: 15; }
+        /* VILLES (z-index < ombre) */
+        .city, .q10-point { position:absolute; width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 3px rgba(0,0,0,.35); transform: translate(-50%,-50%); z-index:15; }
         .city { background: #ef4444; }
-        /* Label des villes */
         .city::after, .q10-point::after { content: attr(data-label); position:absolute; left: 14px; top: -6px; font-weight:950; font-size:12px; color:#fff; white-space:nowrap; text-shadow: 0 2px 8px rgba(0,0,0,.85); }
         
         .q10-grid { display: grid; gap: 20px; }
@@ -344,8 +345,8 @@
                 <div class="scene">
                     <div class="globe" id="globeQ7">
                         <div class="bg-map" id="q8tex"></div>
-                        <div class="city" id="cityMadrid" data-label="Madrid" style="top:50%; left:50%"></div>
-                        <div class="city" id="citySydney" data-label="Sydney" style="top:50%; left:50%"></div>
+                        <div class="city" id="q8madrid" data-label="Madrid"></div>
+                        <div class="city" id="q8sydney" data-label="Sydney"></div>
                         <div class="overlay-night"></div>
                     </div>
                 </div>
@@ -447,7 +448,7 @@
         if(n <= 9) btns[n-1].classList.add('active');
         else if(n === 10) btns[9].classList.add('active'); 
 
-        // Initialisation
+        // Initialisation à la demande
         if(n===1 && !scene1) initQ1();
         if(n===2 && !scene2) initQ2();
         if(n===4) initQ4();
@@ -460,6 +461,10 @@
         setTimeout(() => { 
             if(n===1) onResize1(); 
             if(n===2) onResize2(); 
+            if(n===7) { /* Force update Q7 */
+                const el=document.getElementById('q8madrid');
+                if(el) initQ7(); // Re-init pour être sûr
+            }
         }, 100);
     }
 
@@ -570,7 +575,6 @@
             earth.style.setProperty('--bx', ((-(h/24)*100) % 100).toFixed(2) + '%');
             const x = 110 + Math.cos(t)*88; const y = (110 - 44) + Math.sin(t)*22;
             mk.style.left = (x/220*100) + '%'; mk.style.top  = (y/220*100) + '%';
-            // Ombre portée plus marquée
             mk.style.opacity = (Math.sin(t)+1)*0.35 + 0.3;
         }
     }
@@ -583,7 +587,8 @@
         if(!container) return;
         const w = container.offsetWidth; 
         const R = w / 2; // Le rayon est la moitié de la largeur réelle
-        
+        if(w === 0) return; // Eviter division par 0 ou position hors champ
+
         cities.forEach(c => {
             if(!c.el) return;
             const lat = c.lat * Math.PI/180;
@@ -616,28 +621,24 @@
         if(q7Running) {
             q7Rot = (q7Rot + 0.2) % 360; // Rotation continue
             document.getElementById('q8tex').style.backgroundPosition = (-q7Rot) + '% 50%';
-            
-            // Mettre à jour les villes
-            const cities = [
-                { el: document.getElementById('cityMadrid'), lat: 40.4, lon: -3.7, rot: q7Rot*3.6 },
-                { el: document.getElementById('citySydney'), lat: -33.9, lon: 151.2, rot: q7Rot*3.6 }
-            ];
-            updateCitiesPos('globeQ7', cities);
         }
+        
+        // Mettre à jour les villes A CHAQUE FRAME même si pas running (pour le resize)
+        const cities = [
+            { el: document.getElementById('q8madrid'), lat: 40.4, lon: -3.7, rot: q7Rot*3.6 },
+            { el: document.getElementById('q8sydney'), lat: -33.9, lon: 151.2, rot: q7Rot*3.6 }
+        ];
+        updateCitiesPos('globeQ7', cities);
+
         q7ReqId = requestAnimationFrame(loopQ7);
     }
 
     function initQ7() {
         // Lancer la boucle une seule fois
-        if(!q7ReqId) loopQ7();
+        if(!q7ReqId) {
+            loopQ7();
+        }
         
-        // Initialiser positions statiques
-        const cities = [
-            { el: document.getElementById('cityMadrid'), lat: 40.4, lon: -3.7, rot: 0 },
-            { el: document.getElementById('citySydney'), lat: -33.9, lon: 151.2, rot: 0 }
-        ];
-        updateCitiesPos('globeQ7', cities);
-
         // Bouton Switch
         const btn = document.getElementById('q8startBtn');
         if(btn) {
@@ -684,19 +685,23 @@
         if(typeof onResize2 === 'function') onResize2(); 
         
         // Force update Q7 static pos
-        const cities = [
-            { el: document.getElementById('cityMadrid'), lat: 40.4, lon: -3.7, rot: q7Rot*3.6 },
-            { el: document.getElementById('citySydney'), lat: -33.9, lon: 151.2, rot: q7Rot*3.6 }
-        ];
-        updateCitiesPos('globeQ7', cities);
+        if(document.getElementById('q8madrid')) {
+             const cities = [
+                { el: document.getElementById('q8madrid'), lat: 40.4, lon: -3.7, rot: q7Rot*3.6 },
+                { el: document.getElementById('q8sydney'), lat: -33.9, lon: 151.2, rot: q7Rot*3.6 }
+            ];
+            updateCitiesPos('globeQ7', cities);
+        }
 
         // Force update Q9
-        const points = [
-            { el: document.getElementById('q10A'), lat: 30, lon: 140, rot: q9Rot*3.6 },
-            { el: document.getElementById('q10B'), lat: -20, lon: -110, rot: q9Rot*3.6 },
-            { el: document.getElementById('q10C'), lat: -25, lon: 50, rot: q9Rot*3.6 }
-        ];
-        updateCitiesPos('q10Earth', points);
+        if(document.getElementById('q10A')) {
+            const points = [
+                { el: document.getElementById('q10A'), lat: 30, lon: 140, rot: q9Rot*3.6 },
+                { el: document.getElementById('q10B'), lat: -20, lon: -110, rot: q9Rot*3.6 },
+                { el: document.getElementById('q10C'), lat: -25, lon: 50, rot: q9Rot*3.6 }
+            ];
+            updateCitiesPos('q10Earth', points);
+        }
     });
 
     window.onload = () => { showStep(1); };
