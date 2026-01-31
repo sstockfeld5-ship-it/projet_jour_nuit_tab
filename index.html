@@ -1,927 +1,509 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Module : Ombres et Rotation - Version Finale Tactile</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <meta charset="UTF-8">
+    <title>Atelier : Contraste de Luminosité Pédagogique</title>
     <style>
-        :root { 
-            --bg: #0b1020; --ink: #eef2ff; --accent: #60a5fa; 
-            --success: #4ade80; --error: #f87171; --high-vis: #FFD700; 
-            --card-bg: rgba(255, 255, 255, 0.05);
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 10px; user-select: none; }
+        h2 { color: #2c3e50; margin: 5px 0; }
+        .instructions { background: #fff3cd; border-left: 5px solid #ffc107; padding: 10px; border-radius: 4px; color: #856404; max-width: 800px; text-align: center; font-size: 0.9em; }
         
-        body { 
-            margin: 0; padding: 10px; font-family: system-ui, sans-serif; 
-            background: var(--bg); color: var(--ink); touch-action: pan-y; 
-            overflow-y: scroll; -webkit-tap-highlight-color: transparent;
+        .toolbar {
+            background: white; padding: 10px 25px; border-radius: 50px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin: 15px 0; display: flex; gap: 15px; align-items: center;
         }
-
-        /* --- NAVIGATION --- */
-        .nav-header {
-            max-width: 1000px; margin: 10px auto;
-            display: flex; gap: 5px; padding: 5px;
-            background: rgba(255,255,255,0.05); border-radius: 15px;
-            overflow-x: auto; white-space: nowrap; scrollbar-width: none;
-            transition: opacity 0.3s;
-        }
-        .nav-header::-webkit-scrollbar { display: none; }
-        .nav-header.hidden { display: none; }
+        .color-selector { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.2s; }
+        .color-selector:hover { transform: scale(1.1); }
+        .color-selector.active { border-color: #34495e; transform: scale(1.2); }
         
-        .nav-btn {
-            flex: 0 0 auto; padding: 10px 16px; border: none; border-radius: 10px;
-            background: rgba(255,255,255,0.1); color: white;
-            font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 14px;
-        }
-        .nav-btn.active { background: var(--accent); color: var(--bg); transform: scale(1.05); }
+        .btn { padding: 8px 18px; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; font-size: 0.9em; }
+        .btn-clear { background: #e74c3c; } .btn-clear:hover { background: #c0392b; }
+        .btn-undo { background: #95a5a6; } .btn-undo:hover { background: #7f8c8d; }
 
-        /* CONTENU */
-        .step-content {
-            display: none; opacity: 0;
-            flex-direction: column; min-height: calc(100vh - 80px);
-            max-width: 1000px; margin: auto; padding: 0 5px;
-            transition: opacity 0.4s ease;
+        #canvas-container { 
+            position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+            border-radius: 12px; overflow: hidden; background: white;
         }
-        .step-content.active { display: flex; opacity: 1; }
-
-        /* --- STEP 0 : ACCUEIL --- */
-        #step0 {
-            min-height: 100vh; justify-content: center; align-items: center;
-            background: radial-gradient(circle at 50% 10%, #1a2a4a, var(--bg));
-            margin: -10px; padding: 20px;
-        }
-        .intro-card {
-            max-width: 600px; width: 100%;
-            background: var(--card-bg); border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 24px; padding: 40px; text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); backdrop-filter: blur(10px);
-        }
-        .intro-title {
-            font-size: 2rem; margin: 0 0 10px 0;
-            background: linear-gradient(135deg, #fff, var(--accent));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;
-        }
-        .intro-subtitle {
-            font-size: 1.1rem; color: #b8c1ff; margin: 0 0 30px 0;
-            font-weight: 400; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8;
-        }
-        .visual-decoration { font-size: 4rem; margin-bottom: 20px; animation: float 6s ease-in-out infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-
-        .intro-list {
-            text-align: left; background: rgba(0,0,0,0.2);
-            padding: 20px 20px 20px 40px; border-radius: 16px;
-            margin: 0 auto 30px; border: 1px solid rgba(255,255,255,0.05); max-width: 85%;
-        }
-        .intro-list li { margin-bottom: 10px; line-height: 1.5; color: #e0e7ff; }
-        .intro-list li strong { color: var(--accent); }
-
-        .btn-start {
-            display: inline-block; background: linear-gradient(135deg, var(--accent), #3b82f6);
-            color: white; font-size: 1.2rem; font-weight: 700;
-            padding: 16px 40px; border-radius: 999px; border: none;
-            cursor: pointer; box-shadow: 0 8px 20px rgba(96, 165, 250, 0.3);
-            transition: transform 0.2s, box-shadow 0.2s; text-decoration: none;
-            touch-action: manipulation;
-        }
-        .btn-start:active { transform: translateY(1px); }
-
-        /* --- GLOBAL --- */
-        .card { 
-            background: rgba(255,255,255,0.05); padding: 15px; border-radius: 20px; 
-            border: 1px solid rgba(255,255,255,0.1); flex-grow: 1; display: flex; flex-direction: column;
-            margin-bottom: 20px; overflow-x: hidden;
-        }
-        .instruction-box { background: rgba(96, 165, 250, 0.1); border-left: 4px solid var(--accent); padding: 12px; border-radius: 12px; margin-bottom: 15px; flex-shrink: 0; }
-        
-        .anim-wrap { 
-            width: 100%; min-height: 300px; background: #000; 
-            border-radius: 15px; position: relative; overflow: hidden; 
-            border: 1px solid #333; margin-bottom: 15px; 
-        }
-
-        .controls { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
-        .btn { 
-            background: #333; border: none; color: white; padding: 14px 20px; 
-            border-radius: 12px; font-weight: 700; cursor: pointer; flex: 1; 
-            min-width: 120px; touch-action: manipulation;
-        }
-        .btn-val { background: var(--accent); color: var(--bg); }
-        .btn.ok { border: 1px solid #4ade80; color: #4ade80; background: rgba(74, 222, 128, 0.1); }
-        
-        input[type=range] { height: 30px; touch-action: none; }
-        .feedback { margin-top: 10px; padding: 10px; border-radius: 12px; font-weight: bold; text-align: center; display: none; }
-
-        .responsive-grid { display: flex; flex-wrap: wrap; gap: 20px; align-items: start; }
-        .responsive-grid > * { flex: 1 1 300px; min-width: 280px; max-width: 100%; }
-
-        /* Q2 */
-        .dropzone { 
-            position: absolute; width: 22%; height: 12%; 
-            border: 2px dashed var(--high-vis); background: rgba(255, 215, 0, 0.1); 
-            border-radius: 12px; z-index: 5; display: flex; align-items: center; justify-content: center; 
-            font-size: 0.8em; text-align: center; line-height: 1.1;
-        }
-        #dz_portee { top: 52%; left: 15%; width: 25%; }
-        #dz_propre { top: 38%; left: 46%; width: 22%; } 
-        #dz_eclairee { top: 38%; left: 73%; width: 22%; }
-
-        .chip { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; background: #1a1f2e; color: var(--ink); font-weight: 700; font-size: 13px; cursor: grab; touch-action: none; border: 1px solid rgba(255,255,255,0.2); margin: 5px; user-select: none; }
-        .bank { display: flex; gap: 5px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 15px; margin-top: 10px; min-height: 60px; justify-content: center; flex-wrap: wrap; }
-        
-        .mcq-section label { display: block; padding: 14px; margin: 8px 0; background: rgba(0,0,0,0.3); border-radius: 10px; cursor: pointer; border: 1px solid transparent; }
-        .mcq-section label:hover { border-color: #60a5fa; background: rgba(255,255,255,0.05); }
-
-        /* Q4 */
-        .q5rev-space { position: relative; width: 100%; height: 320px; max-width: 520px; margin: 6px auto 0; --r: 100px; }
-        .q5rev-orbit-path { position: absolute; left: 50%; top: 50%; width: calc(var(--r) * 2); height: calc(var(--r) * 2); margin-left: calc(var(--r) * -1); margin-top: calc(var(--r) * -1); border-radius: 50%; border: 2px solid rgba(255, 255, 255, .45); }
-        .q5rev-sun { position: absolute; left: 50%; top: 50%; width: 60px; height: 60px; margin-left: -30px; margin-top: -30px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff6a0, #ff9a00); box-shadow: 0 0 22px rgba(255, 170, 0, .6); }
-        .q5rev-flag { position: absolute; left: 50%; top: 50%; transform: translate(var(--r), -14px); font-size: 20px; user-select: none; }
-        .q5rev-orbit { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
-        .q5rev-earth { position: absolute; left: 0; top: 0; width: 36px; height: 36px; border-radius: 50%; transform: translateX(var(--r)); background: radial-gradient(circle at 30% 30%, #bfe7ff, #1e4fd8); box-shadow: 0 0 10px rgba(110, 170, 255, .4); }
-        .q5rev-earth::after { content: ""; position: absolute; left: 50%; top: 0; width: 2px; height: 100%; margin-left: -1px; background: rgba(255, 255, 255, .7); }
-
-        /* Q7 Globe (Index Ordi) */
-        #q8Step .globe{ width:300px; height:300px; border-radius:50%; position:relative; overflow:hidden; background:#2a7be6; border:1px solid rgba(255,255,255,.14); box-shadow:0 20px 60px rgba(0,0,0,.45); margin:0 auto; }
-        #q8Step .tex, #q10Tex { 
-            position:absolute; inset:0; border-radius:50%; 
-            background-color: #2a7be6;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1024' height='512' viewBox='0 0 1024 512'><rect width='1024' height='512' fill='%232a7be6'/><g opacity='0.25' fill='white'><ellipse cx='120' cy='90' rx='90' ry='35'/><ellipse cx='200' cy='130' rx='120' ry='45'/><ellipse cx='720' cy='100' rx='140' ry='50'/><ellipse cx='860' cy='160' rx='120' ry='45'/></g><g fill='%233bbf6a'><path d='M150,260 C220,210 280,210 330,250 C350,275 360,315 330,340 C290,375 235,382 200,350 C175,330 150,310 135,295 Z'/><path d='M410,190 C470,160 545,170 585,205 C615,230 620,265 590,285 C545,320 480,315 450,285 C430,265 405,235 400,220 Z'/><path d='M610,255 C650,220 720,220 770,255 C800,275 805,315 775,335 C720,368 655,360 628,330 C610,312 595,285 600,272 Z'/><path d='M840,300 C880,270 925,275 960,310 C980,330 985,360 960,380 C930,405 885,400 860,372 C840,350 830,330 832,315 Z'/></g></svg>"); 
-            background-size:200% 100%; background-repeat:repeat-x; background-position: var(--bx, 0%) 50%; 
-        }
-        .overlay-night, #q8Step .daynight, #q10Earth .q10-daynight { 
-            position:absolute; inset:0; 
-            background: linear-gradient(to right, transparent 50%, rgba(0,0,0,0.6) 50%); 
-            pointer-events:none; z-index: 30; mix-blend-mode: multiply; 
-        }
-        
-        .city, .q10-point { position:absolute; width:12px; height:12px; border-radius:50%; background:#ef4444; border:2px solid #fff; box-shadow:0 0 0 3px rgba(0,0,0,.35); transform: translate(-50%,-50%); z-index:15; }
-        .city::after, .q10-point::after { content: attr(data-label); position:absolute; left: 14px; top: -6px; font-weight:950; font-size:12px; color:#fff; white-space:nowrap; text-shadow: 0 2px 8px rgba(0,0,0,.85); }
-        
-        /* Q9 Styles */
-        .q10-grid { display: grid; gap: 20px; }
-        .q10-earth { width:240px; height:240px; border-radius:50%; position:relative; overflow:hidden; background:#2a7be6; border:1px solid rgba(255,255,255,.14); box-shadow:0 20px 60px rgba(0,0,0,.35); margin:0 auto;}
-        
-        svg { width: 100%; height: auto; display: block; }
-        table { width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border-radius:18px; border:1px solid rgba(255,255,255,0.12); margin-top: 15px; }
-        th,td { padding:12px 5px; border-bottom:1px solid rgba(255,255,255,0.12); text-align: center; font-size: 0.9rem; }
-        
-        /* Q7 Layout */
-        #q8Step .q8grid{ display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
-        #q8Step .q8left{ flex: 1 1 300px; min-width: 280px; width: 100%; } 
-        #q8Step .q8right{ flex: 1 1 300px; width: 100%; }
-        #q8Step .scene { width: 100%; display: flex; justify-content: center; overflow: hidden; padding: 10px 0; }
-
-        /* Q9 Layout */
-        .q10-toprow { display:flex; justify-content:space-between; margin-bottom:10px; }
-        .q10-scene { display:flex; justify-content:center; align-items:center; gap:20px; margin-bottom: 10px;}
-        .q10-qcm label { display: block; margin: 5px 0; }
-        
+        canvas { display: block; outline: none; }
     </style>
 </head>
 <body>
 
-<div id="mainNav" class="nav-header hidden">
-    <button class="nav-btn" onclick="showStep(0)">⌂</button>
-    <button class="nav-btn" onclick="showStep(1)">Q1</button>
-    <button class="nav-btn" onclick="showStep(2)">Q2</button>
-    <button class="nav-btn" onclick="showStep(3)">Q3</button>
-    <button class="nav-btn" onclick="showStep(4)">Q4</button>
-    <button class="nav-btn" onclick="showStep(5)">Q5</button>
-    <button class="nav-btn" onclick="showStep(6)">Q6</button>
-    <button class="nav-btn" onclick="showStep(7)">Q7</button>
-    <button class="nav-btn" onclick="showStep(8)">Q8</button>
-    <button class="nav-btn" onclick="showStep(9)">Q9</button>
-    <button class="nav-btn" onclick="showStep(10)">Bilan</button>
-</div>
+    <h2>Atelier : Différence d'éclat (Pédagogique)</h2>
+    <div class="instructions">
+        <strong>Observation :</strong><br>
+        L1 (Faible) : Jaune pâle, peu visible.<br>
+        L2 (Forte) : Jaune foncé/Orange, très visible.
+    </div>
 
-<div id="step0" class="step-content active">
-    <div class="intro-card">
-        <div class="visual-decoration">🌍</div>
-        <h1 class="intro-title">Ombres & Mouvements</h1>
-        <h2 class="intro-subtitle">Niveau 6e (Cycle 3 : CM1, CM2)</h2>
-
-        <ul class="intro-list">
-            <li>Découvrir les <strong>ombres propres</strong> et <strong>portées</strong>.</li>
-            <li>Comprendre la <strong>rotation</strong> de la Terre sur elle-même.</li>
-            <li>Expliquer l’<strong>alternance du jour et de la nuit</strong>.</li>
-            <li>Distinguer rotation et <strong>révolution</strong>.</li>
-        </ul>
-
-        <button class="btn-start" id="btnIntroStart">Commencer l'activité</button>
+    <div class="toolbar">
+        <span style="color:#7f8c8d; font-weight:bold; margin-right:5px;">Fils :</span>
+        <div class="color-selector active" style="background:#e74c3c;" onclick="setColor('red')" title="Rouge"></div>
+        <div class="color-selector" style="background:#505050;" onclick="setColor('black')" title="Noir (Grisé)"></div>
+        <div class="color-selector" style="background:#2ecc71;" onclick="setColor('green')" title="Vert"></div>
+        <div style="width:1px; height:25px; background:#ddd; margin:0 10px;"></div>
         
-        <div style="margin-top: 20px; font-size: 0.8rem; opacity: 0.5;">
-            Module interactif optimisé pour tactile
-        </div>
+        <button id="btnDel" class="btn btn-undo" onclick="deleteSelectedWire()">Suppr. fil</button>
+        <button class="btn btn-clear" onclick="clearWires()">Tout effacer</button>
     </div>
-</div>
 
-<div id="step1" class="step-content">
-    <div class="card">
-        <div class="instruction-box"><p><strong>1. Ombres :</strong> Allume le projecteur. L'objet est-il entièrement éclairé ?</p></div>
-        <div class="controls">
-            <button class="btn btn-val" id="btn-dancer" onclick="setObj1('dancer')">💃 Danseuse</button>
-            <button class="btn" id="btn-sphere" onclick="setObj1('sphere')">⚪ Boule</button>
-        </div>
-        <div class="controls" style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px;">
-            <span style="font-weight:bold; color:var(--accent)">Intensité :</span>
-            <input type="range" min="0" max="6" step="0.1" value="4" oninput="updateLight1(this.value)" style="flex:2">
-            <span id="valTxt1" style="min-width: 40px; text-align: right;">65%</span>
-        </div>
-        <div id="q1AnimWrap" class="anim-wrap"></div>
-        <div class="controls"><button class="btn" onclick="check1(false)">NON</button><button class="btn" onclick="check1(true)">OUI</button></div>
-        <div id="fb1" class="feedback"></div>
+    <div id="canvas-container">
+        <canvas id="simCanvas" width="900" height="650" tabindex="1"></canvas>
     </div>
-</div>
-
-<div id="step2" class="step-content">
-    <div class="card">
-        <div class="instruction-box"><p><strong>2. Identification :</strong> Glisse les étiquettes dans les zones correspondantes.</p></div>
-        <div class="controls"><button class="btn btn-val" onclick="validate2()">VÉRIFIER</button><button class="btn" onclick="reset2()">RECOMMENCER</button></div>
-        <div id="q2AnimWrap" class="anim-wrap" style="height: 400px;">
-            <div id="dz_portee" class="dropzone"></div>
-            <div id="dz_propre" class="dropzone"></div> 
-            <div id="dz_eclairee" class="dropzone"></div>
-        </div>
-        <div class="bank" id="bank2"><div id="chip_portee" class="chip" data-target="dz_portee">Ombre portée</div><div id="chip_propre" class="chip" data-target="dz_propre">Ombre propre</div><div id="chip_eclairee" class="chip" data-target="dz_eclairee">Zone éclairée</div></div>
-        <div id="fb2" class="feedback"></div>
-    </div>
-</div>
-
-<div id="step3" class="step-content">
-    <div class="card">
-        <div class="instruction-box"><p><strong>3. Rotation :</strong> Quelle est la durée d'un tour complet de la Terre ?</p></div>
-        <div class="responsive-grid">
-            <div style="background:#000; border-radius:15px; padding:10px; border:1px solid #333; position: relative;">
-                <svg viewBox="0 0 520 280"><circle cx="60" cy="140" fill="#f59e0b" r="40"></circle><g id="rotTopG" transform="translate(340 140)"><circle fill="#2dd4bf" r="85" opacity=".9"></circle><path d="M0,-85 A85,85 0 0,1 0,85 A85,85 0 0,1 0,-85 Z" fill="rgba(0,0,0,.5)"></path><circle cx="0" cy="-70" fill="#ff4d8d" r="8" stroke="white" stroke-width="2"></circle><line x1="0" y1="0" x2="0" y2="-70" stroke="white" stroke-width="1" stroke-dasharray="3"/></g><text id="q3TimeText" x="480" y="40" fill="var(--accent)" font-size="28" font-weight="900" text-anchor="end">0h</text><text x="340" y="260" fill="white" text-anchor="middle" font-size="18" opacity="0.8">Vue du Pôle Nord</text></svg>
-            </div>
-            <div style="background:#000; border-radius:15px; padding:10px; border:1px solid #333;">
-                <svg viewBox="0 0 520 280"><circle cx="60" cy="140" fill="#f59e0b" r="40"></circle><g transform="translate(340 140)"><path d="M -85 0 A 85 20 0 0 1 85 0" fill="none" stroke="white" stroke-dasharray="6,4" stroke-width="3" opacity="1" /><circle fill="#0ea5e9" r="85" opacity="0.6"></circle><path d="M 0 -85 A 85 85 0 0 1 0 85 L 0 0 Z" fill="rgba(0,0,0,.5)"></path><path d="M -85 0 A 85 20 0 0 0 85 0" fill="none" stroke="white" stroke-width="3" /><circle id="rotCityProf" cx="-85" cy="0" fill="#ff4d8d" r="8" stroke="white" stroke-width="2"></circle></g><text x="340" y="260" fill="white" text-anchor="middle" font-size="18" opacity="0.8">Vue de l'Équateur</text></svg>
-            </div>
-        </div>
-        <div class="controls" style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; margin-top:20px;">
-            <input id="rotAns" type="number" style="width:80px; padding:10px; border-radius:8px; font-size:16px;">
-            <select id="rotUnit" style="padding:10px; border-radius:8px; font-size:16px;"><option value="h">heures</option><option value="jour">jour</option></select>
-            <button class="btn btn-val" onclick="check3()">Valider</button>
-            <div style="flex-basis:100%; display:flex; align-items:center; gap:10px; margin-top:10px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">
-                <span>Faire tourner :</span>
-                <input type="range" min="0" max="24" step="0.5" value="0" oninput="setRot3(this.value)" style="flex:1;">
-            </div>
-        </div>
-        <div id="st3" class="feedback"></div>
-    </div>
-</div>
-
-<div id="step4" class="step-content">
-    <div class="card">
-        <h2>Question 4 — La révolution de la Terre</h2>
-        <div class="instruction-box"><p><strong>Consigne :</strong> Appuie sur <strong>Play</strong> pour faire tourner la Terre.</p></div>
-        
-        <div class="responsive-grid">
-            <div class="anim-wrap" style="height:auto; min-height:340px; padding:10px; background:#000; overflow:hidden;">
-                <div class="row" style="justify-content:space-between; color:white; margin-bottom:10px;">
-                    <strong>Modèle</strong>
-                    <span class="pill" id="revDayLbl" style="background:rgba(255,255,255,0.1); padding:5px 10px; border-radius:15px;">Jour : 0</span>
-                </div>
-                <div class="q5rev-space">
-                    <div aria-hidden="true" class="q5rev-orbit-path"></div>
-                    <div aria-hidden="true" class="q5rev-sun"></div>
-                    <div aria-hidden="true" class="q5rev-flag">🚩</div>
-                    <div class="q5rev-orbit" id="q5Orbit">
-                        <div aria-hidden="true" class="q5rev-earth" id="q5Earth"></div>
-                    </div>
-                </div>
-                <div class="controls" style="justify-content:center; margin-top:10px; flex-wrap:wrap;">
-                    <button class="btn" id="revPlayBtn" onclick="toggleRevPlay()">▶︎ Play</button>
-                    <button class="btn" id="revAccelBtn" onclick="toggleRevAccel()">🚀 Accélérer</button>
-                    <button class="btn" onclick="addRevDay(30)">+30 j</button>
-                    <button class="btn" onclick="addRevDay(90)">+90 j</button>
-                </div>
-            </div>
-
-            <div class="animWrap" style="height:auto; background:rgba(255,255,255,0.05); border:none; padding: 20px;">
-                <p>Combien de temps met la Terre pour faire un tour complet autour du Soleil ?</p>
-                <div class="row" style="margin-bottom:10px;">
-                    <input class="inputNum" id="revAns" type="number" placeholder="nombre" style="padding:10px; border-radius:8px; border:1px solid #555; background:#222; color:white; width: 100px;">
-                    <select id="revUnit" style="padding:10px; border-radius:8px;">
-                        <option value="">unité</option>
-                        <option value="s">s</option>
-                        <option value="h">h</option>
-                        <option value="jour">jour</option>
-                        <option value="annees">années</option>
-                    </select>
-                </div>
-                <button class="btn primary" onclick="checkRev()">Valider</button>
-                <div class="status" id="st4"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="step5" class="step-content">
-    <div class="card">
-        <h2>Question 5 — Mouvement autour du Soleil</h2>
-        <div class="instruction-box" style="margin-bottom:15px;">
-            <strong>Rappel :</strong><br>
-            • <strong>Rotation</strong> : mouvement sur elle‑même.<br>
-            • <strong>Révolution</strong> : mouvement autour du Soleil.
-        </div>
-
-        <div class="responsive-grid">
-            <div class="anim-wrap" style="height:auto; min-height:auto; padding:15px; background:#000;">
-                <svg aria-label="Révolution simple" role="img" viewBox="0 0 520 260" style="width:100%;">
-                    <circle cx="260" cy="130" fill="rgba(255,211,77,.85)" r="40"></circle>
-                    <ellipse cx="260" cy="130" fill="none" rx="170" ry="90" stroke="rgba(255,255,255,.25)" stroke-width="3"></ellipse>
-                    <g id="revMiniG" transform="translate(430 130)"><circle fill="#2dd4bf" opacity=".95" r="18"></circle></g>
-                </svg>
-                <div class="controls" style="justify-content:center; margin-top:10px;">
-                    <span style="font-size:12px; color:#b8c1ff;">Position</span>
-                    <input id="revMini" max="360" min="0" oninput="setRevMini(this.value)" step="5" type="range" value="0" style="flex:1"/>
-                </div>
-            </div>
-            <div class="mcq-section">
-                <p>Comment s’appelle ce mouvement ?</p>
-                <label><input name="q5" type="radio" value="rotation"/> Rotation</label>
-                <label><input name="q5" type="radio" value="revolution"/> Révolution</label>
-                <label><input name="q5" type="radio" value="zigzag"/> Zigzag</label>
-                <button class="btn btn-val" onclick="checkQ5()" style="margin-top:15px;">Valider</button>
-                <div class="feedback" id="statusQ5"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="step6" class="step-content">
-    <div class="card">
-        <h2>Question 6 — Modéliser l’alternance jour / nuit</h2>
-        <div class="instruction-box"><p><strong>Consigne :</strong> Fais tourner la Terre et observe le mouvement de la ville localisée par un point rouge. Quand est-elle dans le jour ? Quand entre-t-elle dans la nuit ?</p></div>
-        
-        <div id="q6AnimWrap" class="anim-wrap" style="height:auto; padding:20px; display:flex; flex-direction:column; gap:15px; background:#0b1020;">
-            <div class="row" style="justify-content:space-between; color:white;">
-                <strong>Boule éclairée</strong>
-                <span class="pill" id="modLbl" style="background:rgba(255,255,255,0.1); padding:5px 10px; border-radius:15px;">Heure : 0</span>
-            </div>
-            <div class="q7stage">
-                <div class="q7sun"></div>
-                <div class="q7earth" id="q7Earth">
-                    <div class="bg-map"></div>
-                    <div class="overlay-shine"></div>
-                    <div class="overlay-night"></div>
-                    <div class="q7track" style="z-index: 25;">
-                        <svg viewBox="0 0 220 220">
-                            <path class="q7tb" d="M 22 66 A 88 22 0 0 1 198 66" style="stroke:rgba(255,255,255,0.4); stroke-width:3; stroke-dasharray:6 4; fill:none;"></path>
-                            <path class="q7tf" d="M 198 66 A 88 22 0 0 1 22 66" style="stroke:#ff4d8d; stroke-width:4; fill:none;"></path>
-                        </svg>
-                    </div>
-                    <div class="q7marker" id="q7Marker" style="z-index: 26;"></div>
-                </div>
-            </div>
-            <div class="controls" style="justify-content: center;">
-                <input id="modHour" max="24" min="0" oninput="setModHour(this.value)" step="1" type="range" value="0" style="flex:1;">
-                <button class="btn" onclick="addMod(12)">+12 h</button>
-            </div>
-        </div>
-        <div class="mcq-section">
-            <p>Quand la ville passe de la partie éclairée à la partie sombre, que se passe-t-il pour un observateur sur Terre ?</p>
-            <label><input type="radio" name="q6" value="jour_nuit"> Il passe du jour à la nuit.</label>
-            <label><input type="radio" name="q6" value="ete_hiver"> Il passe de l’été à l’hiver.</label>
-            <label><input type="radio" name="q6" value="distance"> La Terre s'éloigne du Soleil.</label>
-            <button class="btn btn-val" onclick="checkQ6()">VÉRIFIER</button>
-            <div id="fb6" class="feedback"></div>
-            <button class="btn ok" style="margin-top:20px; width:100%;" onclick="showStep(7)">Question 7 →</button>
-        </div>
-    </div>
-</div>
-
-<div id="step7" class="step-content">
-    <div id="q8Step">
-        <div class="q8wrap">
-            <div class="q8card">
-                <div class="q8title">Question 7 — Jour et nuit</div>
-                <div class="q8consigne">
-                    <span style="opacity:.95">Consigne :</span>
-                    Clique sur <em>Démarrer la rotation</em>, puis observe quand <strong>Madrid</strong> et <strong>Sydney</strong> sont du côté éclairé (jour) ou du côté sombre (nuit).
-                    Utilise <em>Vitesse ×2</em> si besoin.
-                </div>
-                <div class="q8grid">
-                    <div class="q8left">
-                        <div class="row" style="justify-content:space-between; margin-bottom:8px;">
-                            <span class="pill" id="q8speedLbl">Vitesse : ×1</span>
-                        </div>
-                        <div class="scene">
-                            <div class="globe" role="img">
-                                <div class="tex" id="q8tex"></div>
-                                <div aria-hidden="true" class="sphere"></div>
-                                <div aria-hidden="true" class="daynight"></div>
-                                <div class="city" data-label="Madrid" id="q8madrid"></div>
-                                <div class="city" data-label="Sydney" id="q8sydney"></div>
-                            </div>
-                        </div>
-                        <div class="row" style="margin-top:10px;">
-                            <button class="btn primary" id="q8startBtn" type="button">Démarrer la rotation</button>
-                            <button class="btn" id="q8speed2Btn" type="button">Vitesse ×2</button>
-                        </div>
-                    </div>
-                    <div class="q8right">
-                        <div class="qcm">
-                            <div style="font-weight:900; margin-bottom:6px">QCM – Vrai / Faux</div>
-                            <p>En observant l’animation, indique si les affirmations suivantes sont vraies ou fausses.</p>
-                            <div class="q">
-                                1. Quand <strong>Madrid</strong> est du côté éclairé de la Terre, il fait jour à Madrid.<br/>
-                                <label><input name="q8q1" type="radio" value="v"/> Vrai</label>
-                                <label><input name="q8q1" type="radio" value="f"/> Faux</label>
-                            </div>
-                            <div class="q">
-                                2. Quand <strong>Sydney</strong> est du côté sombre de la Terre, il fait jour à Sydney.<br/>
-                                <label><input name="q8q2" type="radio" value="v"/> Vrai</label>
-                                <label><input name="q8q2" type="radio" value="f"/> Faux</label>
-                            </div>
-                            <div class="q">
-                                3. La Terre tourne sur elle-même, ce qui explique l’alternance du jour et de la nuit.<br/>
-                                <label><input name="q8q3" type="radio" value="v"/> Vrai</label>
-                                <label><input name="q8q3" type="radio" value="f"/> Faux</label>
-                            </div>
-                            <button class="btn primary" onclick="corrigerQ8()" type="button">Corriger</button>
-                            <div id="resQ8" style="margin-top:8px; font-weight:900"></div>
-                            <button class="btn ok" style="margin-top:20px; width:100%;" onclick="showStep(8)">Question 8 →</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="step8" class="step-content">
-    <div class="card">
-        <h2>Question 8 — +12h / +24h</h2>
-        <div class="anim-wrap" style="background:#000; border:1px solid #333; padding:15px; display:flex; flex-direction:column; gap:10px; height:auto;">
-            <div class="row" style="justify-content:space-between"><strong>Instant</strong><span class="pill" id="tSel" style="background:#333; padding:5px 10px; border-radius:10px;">0 h</span></div>
-            <svg viewBox="0 0 560 260" style="width:100%; height:auto;"><circle cx="110" cy="130" fill="rgba(255,211,77,.85)" r="45"></circle><g id="tG" transform="translate(380 130)"><circle fill="#2dd4bf" opacity=".9" r="95"></circle><path d="M0,-95 A95,95 0 0,1 0,95 A95,95 0 0,1 0,-95 Z" fill="rgba(0,0,0,.48)"></path><circle cx="60" cy="-25" fill="#ff4d8d" r="7" stroke="white" stroke-width="3"></circle><text fill="white" font-size="13" x="78" y="-28">Madrid</text><circle cx="-60" cy="30" fill="#60a5fa" r="7" stroke="white" stroke-width="3"></circle><text fill="white" font-size="13" x="-150" y="34">Sydney</text></g></svg>
-            <div class="row" style="gap:14px; margin-top:6px; justify-content:center;"><button class="btn" onclick="setT(0)">0 h</button><button class="btn" onclick="setT(12)">+12 h</button><button class="btn" onclick="setT(24)">+24 h</button></div>
-        </div>
-        <table><thead><tr><th>Ville</th><th>Jour</th><th>Nuit</th></tr></thead><tbody><tr><td>Madrid</td><td><input name="m_t" type="radio" value="jour"/></td><td><input name="m_t" type="radio" value="nuit"/></td></tr><tr><td>Sydney</td><td><input name="s_t" type="radio" value="jour"/></td><td><input name="s_t" type="radio" value="nuit"/></td></tr></tbody></table>
-        <div class="status" id="st8"></div>
-        <div class="row" style="margin-top:20px"><button class="btn primary" onclick="checkT()">Valider</button><button class="btn ok" onclick="showStep(9)">Question 9 →</button></div>
-    </div>
-</div>
-
-<div id="step9" class="step-content">
-    <div id="s9" class="card">
-      <div class="q10-consigne">
-        <strong>Consigne :</strong> Observe la <strong>situation 1</strong>. Clique ensuite sur <strong>+6 h</strong> pour passer à la <strong>situation 2</strong>.
-        Détermine si les points <strong>A</strong>, <strong>B</strong> et <strong>C</strong> sont le <strong>jour</strong> (côté éclairé) ou la <strong>nuit</strong> (côté sombre).
-      </div>
-      <div class="q10-grid">
-        <div class="q10-anim card">
-          <div class="q10-toprow">
-            <div class="q10-pill" id="q10State">Situation 1</div>
-            <div class="q10-pill" id="q10Time">t = 0 h</div>
-          </div>
-          <div class="q10-scene">
-            <div class="q10-sun"></div>
-            <div class="q10-earthWrap">
-              <div class="q10-earth" id="q10Earth">
-                <div class="q10-tex" id="q10Tex"></div>
-                <div class="q10-sphere"></div>
-                <div class="q10-daynight"></div>
-                <div class="q10-point" id="q10A" data-label="A"></div>
-                <div class="q10-point" id="q10B" data-label="B"></div>
-                <div class="q10-point" id="q10C" data-label="C"></div>
-              </div>
-              <div class="q10-earthLabel">Terre</div>
-            </div>
-          </div>
-          <div class="q10-controls">
-            <button class="btn" id="q10Plus6">+6 h</button>
-            <button class="btn" id="q10Reset">Retour Situation 1</button>
-          </div>
-        </div>
-        <div class="q10-qcm card">
-          <div style="font-weight:900; margin-bottom:6px">Questions</div>
-          <div class="q10-q">
-            <div class="q10-qtitle">10.1 – Situation 1 (t = 0 h)</div>
-            <div class="q10-mini">Indique si chaque point est <strong>Jour</strong> ou <strong>Nuit</strong>.</div>
-            <div class="q10-row"><div class="q10-lbl">Point A</div><label><input type="radio" name="q10_s1_a" value="jour"> Jour</label><label><input type="radio" name="q10_s1_a" value="nuit"> Nuit</label></div>
-            <div class="q10-row"><div class="q10-lbl">Point B</div><label><input type="radio" name="q10_s1_b" value="jour"> Jour</label><label><input type="radio" name="q10_s1_b" value="nuit"> Nuit</label></div>
-            <div class="q10-row"><div class="q10-lbl">Point C</div><label><input type="radio" name="q10_s1_c" value="jour"> Jour</label><label><input type="radio" name="q10_s1_c" value="nuit"> Nuit</label></div>
-          </div>
-          <div class="q10-q">
-            <div class="q10-qtitle">10.2 – Situation 2 (6 h plus tard)</div>
-            <div class="q10-mini">Après <strong>+6 h</strong>, indique à nouveau <strong>Jour</strong> ou <strong>Nuit</strong>.</div>
-            <div class="q10-row"><div class="q10-lbl">Point A</div><label><input type="radio" name="q10_s2_a" value="jour"> Jour</label><label><input type="radio" name="q10_s2_a" value="nuit"> Nuit</label></div>
-            <div class="q10-row"><div class="q10-lbl">Point B</div><label><input type="radio" name="q10_s2_b" value="jour"> Jour</label><label><input type="radio" name="q10_s2_b" value="nuit"> Nuit</label></div>
-            <div class="q10-row"><div class="q10-lbl">Point C</div><label><input type="radio" name="q10_s2_c" value="jour"> Jour</label><label><input type="radio" name="q10_s2_c" value="nuit"> Nuit</label></div>
-          </div>
-          <div class="q10-q">
-            <div class="q10-qtitle">10.3 – Retour à la position initiale</div>
-            <div class="q10-mini">Au bout de combien de temps les points retrouveront-ils la position de la Situation 1 ?</div>
-            <label class="q10-choice"><input type="radio" name="q10_tour" value="24"> 24 h</label>
-            <label class="q10-choice"><input type="radio" name="q10_tour" value="12"> 12 h</label>
-          </div>
-          <button class="btn primary" id="q10Check">Corriger</button>
-          <div id="q10Res" class="q10-res"></div>
-          <button class="btn ok" style="margin-top:20px; width:100%;" onclick="showStep(10)">Vers la synthèse →</button>
-        </div>
-      </div>
-    </div>
-</div>
-
-<div id="step10" class="step-content">
-    <div class="card" style="border-color: #4ade80; background: rgba(74, 222, 128, 0.05);">
-        <h2 style="color:#4ade80; text-align:center; font-size:1.8rem; margin-bottom:20px;">Synthèse du module</h2>
-        <div style="font-size:1.1rem; line-height:1.6; padding: 20px; text-align:center;">
-            <p>La Terre tourne sur elle-même en environ <strong>24 heures</strong>.</p>
-            <p>Lorsqu’un point de la surface terrestre se trouve du côté <strong>éclairé</strong> par le Soleil, il fait <strong>jour</strong>.</p>
-            <p>Lorsqu’il se trouve du côté <strong>sombre</strong>, il fait <strong>nuit</strong>.</p>
-            <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:25px 50px;">
-            <p style="font-weight:900; color: #60a5fa; font-size:1.3rem;">La rotation de la Terre explique donc l’alternance du jour et de la nuit.</p>
-        </div>
-        <div style="margin-top:30px; text-align:center;">
-            <button class="btn" onclick="showStep(0)">⌂ Revenir à l'accueil</button>
-        </div>
-    </div>
-</div>
 
 <script>
-    // --- NAVIGATION ---
-    function showStep(n) {
-        // Masquer/Afficher la nav bar
-        const nav = document.getElementById('mainNav');
-        if(n === 0) nav.classList.add('hidden');
-        else nav.classList.remove('hidden');
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const btnDel = document.getElementById('btnDel');
+    const SHELF_WIDTH = 180;
 
-        // Gérer l'affichage des étapes
-        document.querySelectorAll('.step-content').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        
-        // Sécurité si n hors bornes
-        const target = document.getElementById('step' + n);
-        if(target) target.classList.add('active');
-        
-        // Boutons nav actifs
-        const btns = document.querySelectorAll('.nav-btn');
-        if(n >= 1 && n <= 9) btns[n].classList.add('active'); // +1 car le bouton 0 est Home
-        if(n === 10) btns[10].classList.add('active');
-
-        // Initialisation à la demande (Lazy Loading)
-        if(n===1 && !scene1) initQ1();
-        if(n===2 && !scene2) initQ2();
-        if(n===4) initQ4();
-        if(n===6) initQ6(); 
-        
-        // RECALCUL SYSTEMATIQUE POUR Q7 ET Q9 (Fixe le problème mobile)
-        if(n===7) { 
-            setTimeout(() => { 
-                const globe = document.getElementById('globeQ7');
-                if(globe && globe.offsetWidth > 0) initQ7(); 
-            }, 100); 
-        }
-        if(n===9) {
-             setTimeout(() => { 
-                const globe = document.getElementById('q10Earth');
-                if(globe && globe.offsetWidth > 0) initQ9(); 
-            }, 100); 
-        }
-        
-        window.scrollTo(0, 0);
-        setTimeout(() => { 
-            if(n===1) onResize1(); 
-            if(n===2) onResize2(); 
-            if(n===7 && document.getElementById('q8madrid')) initQ7();
-        }, 100);
-    }
+    // --- CONFIGURATION ---
+    const VAL_L1 = 0.10;
+    const VAL_L2 = 0.35;
     
-    // --- STEP 0 BOUTON (Touch Event) ---
-    const btnIntro = document.getElementById('btnIntroStart');
-    if(btnIntro) {
-        btnIntro.addEventListener('click', () => showStep(1));
-        btnIntro.addEventListener('touchend', (e) => {
-            e.preventDefault(); 
-            showStep(1);
-        });
-    }
+    // --- COULEURS ---
+    const COL_RED = '#e74c3c';
+    const COL_BLACK = '#505050';
+    const COL_GREEN = '#2ecc71';
 
-    // --- Q1 ---
-    var scene1,camera1,renderer1,light1,meshes1={}, bulbMesh;
-    function initQ1(){
-        var c=document.getElementById("q1AnimWrap"); if(!c) return;
-        scene1=new THREE.Scene(); 
-        camera1=new THREE.PerspectiveCamera(45,c.clientWidth/c.clientHeight,0.1,1000); 
-        camera1.position.set(-25, 10, 50); camera1.lookAt(5, 0, 0);
-        renderer1=new THREE.WebGLRenderer({antialias:true}); renderer1.setSize(c.clientWidth,c.clientHeight); renderer1.shadowMap.enabled=true; c.appendChild(renderer1.domElement);
-        var screen = new THREE.Mesh(new THREE.PlaneGeometry(130, 70), new THREE.MeshPhongMaterial({color:0xffffff}));
-        screen.position.set(0, 5, -20); screen.receiveShadow = true; scene1.add(screen);
-        light1 = new THREE.SpotLight(0xffffff, 1.5); light1.position.set(25, 10, 35); light1.castShadow = true;
-        light1.angle = Math.PI/6; light1.penumbra = 0.2; scene1.add(light1); scene1.add(light1.target); light1.target.position.set(5, 0, -20);
-        var projGroup = new THREE.Group(); projGroup.position.copy(light1.position); projGroup.lookAt(5, 0, -20);
-        var body = new THREE.Mesh(new THREE.CylinderGeometry(2, 4, 6, 32), new THREE.MeshPhongMaterial({color:0x444444})); body.rotation.x = -Math.PI/2; projGroup.add(body);
-        bulbMesh = new THREE.Mesh(new THREE.SphereGeometry(1.8,16,16), new THREE.MeshBasicMaterial({color:0xffff00})); bulbMesh.position.set(0, 0, 3.5); projGroup.add(bulbMesh);
-        scene1.add(projGroup); scene1.add(new THREE.AmbientLight(0xffffff, 0.1));
-        var d=new THREE.Group(); var sk=new THREE.MeshPhongMaterial({color:0xffdbac}), dr=new THREE.MeshPhongMaterial({color:0xff0088});
-        var t=new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.8,4), dr); t.position.y=0; d.add(t);
-        var h=new THREE.Mesh(new THREE.SphereGeometry(1), sk); h.position.y=3; d.add(h);
-        var k=new THREE.Mesh(new THREE.CylinderGeometry(0.8,3.8,1.8,32), dr); k.position.y=-1.5; d.add(k);
-        var aL=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,3.5), sk); aL.position.set(1.2,2.5,0); aL.rotation.z=-0.6; d.add(aL);
-        var aR=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,3.5), sk); aR.position.set(-1.2,2.5,0); aR.rotation.z=0.6; d.add(aR);
-        d.traverse(n=>{if(n.isMesh)n.castShadow=true;}); d.scale.set(1.6, 1.6, 1.6); d.position.set(5, -3, 5); 
-        meshes1.dancer=d; meshes1.sphere=new THREE.Mesh(new THREE.SphereGeometry(5,32,32),new THREE.MeshPhongMaterial({color:0xcccccc})); 
-        meshes1.sphere.position.set(5, -3, 5); meshes1.sphere.castShadow=true; meshes1.sphere.visible=false;
-        scene1.add(meshes1.dancer, meshes1.sphere); animate1();
-    }
-    function updateLight1(v){ light1.intensity=parseFloat(v); var r=Math.min(v/5,1); bulbMesh.material.color.copy(new THREE.Color(0x111111)).lerp(new THREE.Color(0xffff00),r); document.getElementById('valTxt1').textContent=Math.round(v*16)+"%"; }
-    function setObj1(t){ meshes1.dancer.visible=(t==='dancer'); meshes1.sphere.visible=(t==='sphere'); }
-    function check1(o){ var f=document.getElementById('fb1'); f.style.display="block"; f.innerHTML=o?"❌ NON.":"✅ CORRECT !"; f.style.color=o?"var(--error)":"var(--success)"; }
-    function animate1(){ requestAnimationFrame(animate1); if(meshes1.dancer.visible) meshes1.dancer.rotation.y+=0.01; renderer1.render(scene1,camera1); }
-    function onResize1(){ var c=document.getElementById("q1AnimWrap"); if(renderer1 && c){ renderer1.setSize(c.clientWidth,c.clientHeight); camera1.aspect=c.clientWidth/c.clientHeight; camera1.updateProjectionMatrix();} }
+    // --- ÉTAT ---
+    let components = [];
+    let wires = []; 
+    let currentColor = 'red';
+    
+    let draggingComp = null, dragOffset = {x:0, y:0};
+    let drawingWire = false, wireStartTerm = null;
+    let draggingHandle = null; 
+    let selectedWire = null;
+    let mouse = {x:0, y:0};
 
-    // --- Q2 ---
-    var scene2,camera2,renderer2,earth2;
-    function initQ2(){
-        var c=document.getElementById("q2AnimWrap"); if(!c) return;
-        scene2=new THREE.Scene(); camera2=new THREE.PerspectiveCamera(35,c.clientWidth/c.clientHeight,0.1,1000); camera2.position.set(30,25,80); camera2.lookAt(-15,5,0);
-        renderer2=new THREE.WebGLRenderer({antialias:true}); renderer2.setSize(c.clientWidth,c.clientHeight); renderer2.shadowMap.enabled=true; c.appendChild(renderer2.domElement);
-        var s=new THREE.Mesh(new THREE.PlaneGeometry(60,40),new THREE.MeshPhongMaterial({color:0xffffff})); s.position.set(-60,10,0); s.rotation.y=Math.PI/2; s.receiveShadow=true; scene2.add(s);
-        earth2=new THREE.Mesh(new THREE.SphereGeometry(7,32,32),new THREE.MeshPhongMaterial({color:0x2266ff})); earth2.position.set(10,10,0); earth2.castShadow=true; scene2.add(earth2);
-        var l=new THREE.PointLight(0xffffff,1.5,300); l.position.set(50,10,0); l.castShadow=true; l.shadow.mapSize.width=2048; l.shadow.mapSize.height=2048; l.shadow.radius=0; scene2.add(l); scene2.add(new THREE.AmbientLight(0xffffff,0.1));
-        var bGeo=new THREE.SphereGeometry(2,16,16); var bMat=new THREE.MeshBasicMaterial({color:0xffff00}); var bulb=new THREE.Mesh(bGeo,bMat); bulb.position.copy(l.position); scene2.add(bulb);
-        animate2(); setupDrag2();
-    }
-    function setupDrag2(){ 
-        var dItem=null, off={x:0,y:0}; const chips = document.querySelectorAll('.chip');
-        chips.forEach(el=>{
-            const start = (e) => {
-                dItem=el; var r=el.getBoundingClientRect(); 
-                var clientX = e.touches ? e.touches[0].clientX : e.clientX; var clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                off.x=clientX-r.left; off.y=clientY-r.top; el.style.position='fixed'; el.style.zIndex="1000"; el.style.width = r.width + 'px';
-            };
-            el.addEventListener('mousedown', start); el.addEventListener('touchstart', start, {passive: false});
-        });
-        const move = (e) => { if(!dItem) return; e.preventDefault(); 
-            var clientX = e.touches ? e.touches[0].clientX : e.clientX; var clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            dItem.style.left=(clientX-off.x)+'px'; dItem.style.top=(clientY-off.y)+'px';
-        };
-        document.addEventListener('mousemove', move); document.addEventListener('touchmove', move, {passive: false});
-        const end = (e) => { if(!dItem) return; checkDrop2(dItem, e); dItem=null; };
-        document.addEventListener('mouseup', end); document.addEventListener('touchend', (e)=>{ if(dItem) { checkDrop2(dItem, e.changedTouches[0]); dItem=null; } });
-    }
-    function checkDrop2(item, e){ 
-        var clientX = e.clientX || e.pageX; var clientY = e.clientY || e.pageY;
-        var dzs=document.querySelectorAll('.dropzone'); var drop=false; 
-        dzs.forEach(dz=>{
-            var r=dz.getBoundingClientRect(); 
-            if(clientX>r.left && clientX<r.right && clientY>r.top && clientY<r.bottom){
-                dz.appendChild(item); item.style.position="absolute"; item.style.left="0"; item.style.top="0"; item.style.width="100%"; item.style.height="100%"; item.style.margin="0"; drop=true;
+    // --- CLASSES ---
+    class Component {
+        constructor(id, type, x, y, label) {
+            this.id = id; this.type = type; this.x = x; this.y = y; this.label = label;
+            this.w = (type==='Gen')?160:(type==='Multi'?80:60);
+            this.h = (type==='Gen')?110:(type==='Multi'?130:70);
+            this.isOn = false;
+            this.isGenOn = false;
+            this.measuredValue = 0;
+            this.currentIntensity = 0;
+        }
+        
+        getTerminals() {
+            const t = {};
+            if(this.type === 'Gen') {
+                t.m = {x:this.x+8, y:this.y+35, id:this.id+'_m', color:'black'};
+                t.p = {x:this.x+38, y:this.y+35, id:this.id+'_p', color:'red'};
+            } else if(this.type === 'Lamp') {
+                t.l = {x:this.x-20, y:this.y+15, id:this.id+'_l', color:'black'};
+                t.r = {x:this.x+20, y:this.y+15, id:this.id+'_r', color:'black'};
+            } else if(this.type === 'Multi') {
+                t.com = {x:this.x-15, y:this.y+50, id:this.id+'_com', color:'black'};
+                t.a10 = {x:this.x+25, y:this.y+50, id:this.id+'_a10', color:'yellow'};
             }
-        }); 
-        if(!drop){ document.getElementById('bank2').appendChild(item); item.style.position="static"; item.style.width="auto"; item.style.margin="5px"; }
-    }
-    function validate2(){ var f=document.getElementById('fb2'), ok=true, count=0; document.querySelectorAll('.dropzone').forEach(dz=>{var c=dz.querySelector('.chip'); if(c)count++; if(!c||c.dataset.target!==dz.id)ok=false}); f.innerHTML=(ok&&count===3)?"✅ BRAVO !":"❌ ERREUR."; f.style.display="block"; f.style.color=(ok&&count===3)?"var(--success)":"var(--error)"}
-    function reset2(){ document.querySelectorAll('.chip').forEach(c=>{document.getElementById('bank2').appendChild(c); c.style.position="static"; c.style.margin="5px";}); }
-    function animate2(){ requestAnimationFrame(animate2); if(earth2) earth2.rotation.y+=0.003; renderer2.render(scene2,camera2); }
-    function onResize2(){ var c=document.getElementById("q2AnimWrap"); if(renderer2 && c){ renderer2.setSize(c.clientWidth,c.clientHeight); camera2.aspect=c.clientWidth/c.clientHeight; camera2.updateProjectionMatrix();} }
+            return t;
+        }
+        
+        contains(mx, my) {
+            return mx > this.x - this.w/2 && mx < this.x + this.w/2 && my > this.y - this.h/2 && my < this.y + this.h/2;
+        }
 
-    // --- Q3/Q4 ---
-    function setRot3(h){ document.getElementById('q3TimeText').textContent = Math.floor(h) + 'h'; document.getElementById('rotTopG').setAttribute('transform','translate(340 140) rotate('+(h/24*360)+')'); const rad = (h/24)*Math.PI*2 + Math.PI; const rx = 85, ry = 20; const cx = rx * Math.cos(rad); const cy = ry * Math.sin(rad); const prof = document.getElementById('rotCityProf'); if(prof) { prof.setAttribute('cx', cx); prof.setAttribute('cy', cy); prof.setAttribute('opacity', (Math.sin(rad)>0)?1:0.5); } }
-    function check3(){ var v=document.getElementById('rotAns').value, st=document.getElementById('st3'); st.style.display="block"; if(v==='24') { st.innerHTML="✅ CORRECT !"; st.style.color="var(--success)"; } else { st.innerHTML="❌ RÉESSAIE."; st.style.color="var(--error)"; } }
-    
-    const REVOLUTION_DAYS = 365; let revDay = 0; let revPlaying = false; let revRaf = 0; let revLastTs = 0;
-    function initQ4(){ renderRev(); }
-    function renderRev(){ const lbl = document.getElementById('revDayLbl'); if(lbl) lbl.textContent = 'Jour : ' + Math.floor(revDay); const orbit = document.getElementById('q5Orbit'); const earth = document.getElementById('q5Earth'); if(orbit) orbit.style.transform = 'rotate(' + (revDay / REVOLUTION_DAYS) * (Math.PI * 2) + 'rad)'; if(earth) earth.style.transform = 'translateX(var(--r)) rotate(' + (revDay / 6) * (Math.PI * 2) + 'rad)'; }
-    function toggleRevPlay(){ revPlaying = !revPlaying; document.getElementById('revPlayBtn').textContent = revPlaying ? '⏸ Pause' : '▶︎ Play'; if(revPlaying){ revLastTs = 0; revRaf = requestAnimationFrame(revTick); } else { cancelAnimationFrame(revRaf); } }
-    function revTick(ts){ if(!revPlaying) return; if(!revLastTs) revLastTs = ts; revDay += (ts - revLastTs) / 1000 * 20; revLastTs = ts; if(revDay >= REVOLUTION_DAYS){ revDay = REVOLUTION_DAYS; toggleRevPlay(); } renderRev(); revRaf = requestAnimationFrame(revTick); }
-    function resetRev(){ revDay=0; renderRev(); if(revPlaying) toggleRevPlay(); }
-    function checkRev(){ const n=document.getElementById('revAns').value; const u=document.getElementById('revUnit').value; const ok = (u==='jour' && Math.abs(n-365)<=10) || (u==='annees' && Math.abs(n-1)<=0.1); document.getElementById('st4').innerHTML = ok ? "<span style='color:#4ade80'>✅ Correct : 365 jours</span>" : "<span style='color:#f87171'>❌ Réessaie.</span>"; document.getElementById('st4').style.display = "block"; }
-    function addRevDay(d){ revDay=(revDay+d)%366; renderRev(); }
-    function toggleRevAccel(){ /* No implementation needed for this specific request, keeps layout */ }
-
-    // --- Q5 ---
-    function setRevMini(deg){ const t=deg*Math.PI/180; const x=260 + 170*Math.cos(t); const y=130 + 90*Math.sin(t); const g = document.getElementById('revMiniG'); if(g) g.setAttribute('transform','translate('+x.toFixed(1)+' '+y.toFixed(1)+')'); }
-    function checkQ5(){ var r=document.querySelector('input[name="q5"]:checked'), st=document.getElementById('statusQ5'); st.style.display="block"; st.innerHTML = (r && r.value==="revolution") ? "✅ Correct !" : "❌ Incorrect."; st.style.color=(r && r.value==="revolution")?"#4ade80":"#f87171"; }
-
-    // --- Q6 ---
-    function initQ6() { setModHour(0); }
-    function setModHour(h){
-        h=Number(h); document.getElementById('modLbl').textContent='Heure : '+h;
-        const earth=document.getElementById('q7Earth'); const mk=document.getElementById('q7Marker');
-        if(earth && mk){
-            const t = (h/24)*Math.PI*2; 
-            earth.style.setProperty('--bx', ((-(h/24)*100) % 100).toFixed(2) + '%');
-            const x = 110 + Math.cos(t)*88; const y = (110 - 44) + Math.sin(t)*22;
-            mk.style.left = (x/220*100) + '%'; mk.style.top  = (y/220*100) + '%';
-            mk.style.opacity = (Math.sin(t)+1)*0.35 + 0.3;
+        checkSwitchClick(mx, my) {
+            if (this.type !== 'Gen') return false;
+            if (mx > this.x - 70 && mx < this.x - 30 && my > this.y - 25 && my < this.y + 25) {
+                this.isGenOn = !this.isGenOn;
+                return true;
+            }
+            return false;
         }
     }
-    function addMod(d){ var r=document.getElementById('modHour'); r.value=(Number(r.value)+d)%25; setModHour(r.value); }
-    function checkQ6() { var r=document.querySelector('input[name="q6"]:checked'), fb=document.getElementById('fb6'); fb.style.display="block"; fb.innerHTML=(r && r.value==="jour_nuit")?"✅ CORRECT !":"❌ FAUX."; fb.style.color=(r && r.value==="jour_nuit")?"#4ade80":"#f87171"; }
 
-    // --- Q7 (Adaptation de index_ordi.html pour système mobile) ---
-    // Cette fonction initialise la boucle et gère les événements du globe Q7
-    function initQ7(){
-      const tex = document.getElementById('q8tex');
-      const madrid = document.getElementById('q8madrid');
-      const sydney = document.getElementById('q8sydney');
-      const speedLbl = document.getElementById('q8speedLbl');
-      const startBtn = document.getElementById('q8startBtn');
-      const speed2Btn = document.getElementById('q8speed2Btn');
+    // --- MOTEUR ELECTRIQUE ---
+    function analyzeCircuit() {
+        components.forEach(c => { 
+            if(c.type !== 'Gen') c.isOn = false; 
+            c.measuredValue = 0; 
+            c.currentIntensity = 0;
+        });
 
-      if(!tex || !madrid || !sydney || !startBtn) return;
+        const gen = components.find(c => c.type === 'Gen');
+        if (!gen.isGenOn) return; 
 
-      // Configuration globe
-      const R = 150, CX = 150, CY = 150;
-      const cities = [
-        { el: madrid, lat: 40.4, lon: -3.7 },
-        { el: sydney, lat: -33.9, lon: 151.2 }
-      ];
+        let adj = {}; 
+        const connect = (id1, id2) => {
+            if(!adj[id1]) adj[id1] = []; if(!adj[id2]) adj[id2] = [];
+            adj[id1].push(id2); adj[id2].push(id1);
+        };
+        wires.forEach(w => connect(w.startId, w.endId));
 
-      // Variables d'état
-      let running = false;
-      let speedMult = 1;     
-      const omega = 12;      
-      let rotDeg = 0;
-      let last = performance.now();
+        const multis = components.filter(c => c.type === 'Multi');
+        multis.forEach(m => {
+            const mt = m.getTerminals();
+            connect(mt.com.id, mt.a10.id);
+        });
 
-      // Fonction de projection lat/lon -> x/y/z
-      function project(latDeg, lonDeg){
-        const lat = latDeg * Math.PI/180;
-        const lon = lonDeg * Math.PI/180;
-        const x = Math.cos(lat) * Math.sin(lon);
-        const y = Math.sin(lat);
-        const z = Math.cos(lat) * Math.cos(lon);
-        const px = CX + R * x;
-        const py = CY - R * y;
-        return {px, py, z};
-      }
+        const genP = gen.getTerminals().p.id;
+        const genM = gen.getTerminals().m.id;
 
-      // Fonction de rendu visuel
-      function render(){
-        const bx = (-(rotDeg/360)*100) % 100;
-        tex.style.setProperty('--bx', bx.toFixed(2) + '%');
-
-        for(const c of cities){
-          const lon = c.lon + rotDeg;
-          const p = project(c.lat, lon);
-          c.el.style.left = p.px.toFixed(1) + 'px';
-          c.el.style.top  = p.py.toFixed(1) + 'px';
-
-          // Gestion visibilité si derrière le globe
-          if(p.z < 0){
-            c.el.style.opacity = '0.35';
-            c.el.style.filter = 'blur(0.8px)';
-          }else{
-            c.el.style.opacity = '1';
-            c.el.style.filter = 'none';
-          }
+        function getConnectedNodes(startNode, blockList = []) {
+            let visited = new Set();
+            let stack = [startNode];
+            while(stack.length > 0) {
+                let u = stack.pop();
+                if(!visited.has(u)) {
+                    visited.add(u);
+                    if(adj[u]) {
+                        adj[u].forEach(v => {
+                            let isBlocked = false;
+                            for(let pair of blockList) {
+                                if((pair[0]===u && pair[1]===v) || (pair[0]===v && pair[1]===u)) isBlocked = true;
+                            }
+                            if(!isBlocked) stack.push(v);
+                        });
+                    }
+                }
+            }
+            return visited;
         }
-      }
 
-      // Mise à jour des textes boutons
-      function updateUI(){
-        if(speedLbl) speedLbl.textContent = 'Vitesse : ×' + speedMult;
-        if(startBtn) startBtn.textContent = running ? 'Pause' : 'Démarrer la rotation';
-      }
+        const nodesPlus = getConnectedNodes(genP);
+        const nodesMinus = getConnectedNodes(genM);
 
-      // Boucle d'animation
-      function tick(now){
-        const dt = (now - last)/900; 
-        last = now;
+        ['l1', 'l2'].forEach(lid => {
+            const l = components.find(c => c.id === lid);
+            const lt = l.getTerminals();
+            const c1 = nodesPlus.has(lt.l.id) && nodesMinus.has(lt.r.id);
+            const c2 = nodesPlus.has(lt.r.id) && nodesMinus.has(lt.l.id);
+            if(c1 || c2) {
+                l.isOn = true;
+                if(lid === 'l1') l.currentIntensity = VAL_L1;
+                if(lid === 'l2') l.currentIntensity = VAL_L2;
+            }
+        });
 
-        if(running){
-          rotDeg = (rotDeg + omega * speedMult * dt) % 360;
-          render();
-        }
-        requestAnimationFrame(tick);
-      }
+        const l1 = components.find(c => c.id === 'l1');
+        const l2 = components.find(c => c.id === 'l2');
 
-      // Event Listeners (protégés pour éviter doublons)
-      
-      const toggleRun = (e) => { 
-        if(e && e.cancelable) e.preventDefault(); // évite double click
-        running = !running; updateUI(); 
-      };
-      startBtn.addEventListener('click', toggleRun);
-      startBtn.addEventListener('touchend', toggleRun);
+        multis.forEach(m => {
+            const mt = m.getTerminals();
+            const blockList = [[mt.com.id, mt.a10.id]];
+            const pSet = getConnectedNodes(genP, blockList);
+            const mSet = getConnectedNodes(genM, blockList);
 
-      if(speed2Btn) {
-          const toggleSpeed = (e) => { 
-            if(e && e.cancelable) e.preventDefault();
-            speedMult = (speedMult === 1) ? 2 : 1; updateUI(); 
-          };
-          speed2Btn.addEventListener('click', toggleSpeed);
-          speed2Btn.addEventListener('touchend', toggleSpeed);
-      }
+            function isLampPowered(lamp, pS, mS) {
+                const t = lamp.getTerminals();
+                return (pS.has(t.l.id) && mS.has(t.r.id)) || (mS.has(t.l.id) && pS.has(t.r.id));
+            }
 
-      // Lancement initial
-      render();
-      updateUI();
-      requestAnimationFrame(tick);
-    }
-    
-    function corrigerQ8(){ var s=0; if(getChecked('q8q1')=='v')s++; if(getChecked('q8q2')=='f')s++; if(getChecked('q8q3')=='v')s++; document.getElementById('resQ8').textContent = (s===3) ? "✅ Bravo !" : "Score : "+s+"/3"; }
-
-    // --- Q8 ---
-    function setT(t){ document.getElementById('tSel').textContent=t+' h'; document.getElementById('tG').setAttribute('transform','translate(380 130) rotate('+(t/24*360)+')'); }
-    function checkT(){ var m=getChecked('m_t'), s=getChecked('s_t'); var ok = (document.getElementById('tSel').textContent.includes('0 h') && m=='jour' && s=='nuit'); document.getElementById('st8').innerHTML=ok?"✅ Correct":"❌ Vérifie 0h"; document.getElementById('st8').style.display='block'; }
-
-    // --- Q9 IMPORTÉ DU INDEX.HTML ---
-    function initQ9(){
-      const tex = document.getElementById('q10Tex');
-      const elA = document.getElementById('q10A');
-      const elB = document.getElementById('q10B');
-      const elC = document.getElementById('q10C');
-      const lblState = document.getElementById('q10State');
-      const lblTime  = document.getElementById('q10Time');
-      const btnPlus6 = document.getElementById('q10Plus6');
-      const btnReset = document.getElementById('q10Reset');
-      const btnCheck = document.getElementById('q10Check');
-      const res = document.getElementById('q10Res');
-
-      if(!tex) return; 
-
-      const R = 120, CX = 120, CY = 120;
-      const points = [
-        {name:'A', el: elA, lat: 30, lon: 140},
-        {name:'B', el: elB, lat: -20, lon: -110},
-        {name:'C', el: elC, lat: -25, lon: 50},
-      ];
-
-      let running = false;
-      let rotDeg = 0;
-      let hours = 0;
-
-      function setLabels(){
-        lblTime.textContent = 't = ' + hours + ' h';
-        lblState.textContent = (hours === 0) ? 'Situation 1' : 'Situation 2';
-      }
-
-      function project(latDeg, lonDeg){
-        const lat = latDeg * Math.PI/180;
-        const lon = lonDeg * Math.PI/180;
-        const x = Math.cos(lat) * Math.sin(lon);
-        const y = Math.sin(lat);
-        const z = Math.cos(lat) * Math.cos(lon);
-        const px = CX + R * x;
-        const py = CY - R * y;
-        return {px, py, z};
-      }
-
-      function placePoints(){
-        const bx = (-(rotDeg/360)*100) % 100;
-        tex.style.setProperty('--bx', bx.toFixed(2) + '%');
-
-        for(const p0 of points){
-          const lon = p0.lon + rotDeg;
-          const p = project(p0.lat, lon);
-          p0.el.style.left = p.px.toFixed(1) + 'px';
-          p0.el.style.top  = p.py.toFixed(1) + 'px';
-          p0.el.style.opacity = '1';
-          p0.el.style.filter = 'none';
-          const day = (p.px < CX);
-          p0.el.style.background = day ? '#22c55e' : '#111827';
-        }
-      }
-
-      function plus6h(){ hours = 6; rotDeg = (rotDeg + 90) % 360; setLabels(); placePoints(); }
-      function reset(){ hours = 0; rotDeg = 0; setLabels(); placePoints(); }
-
-      function corriger(){
-         let score = 0;
-         const getVal = (n) => { const el = document.querySelector('input[name="'+n+'"]:checked'); return el?el.value:null; };
-         if(getVal('q10_s1_a') === 'nuit') score++;
-         if(getVal('q10_s1_b') === 'jour') score++;
-         if(getVal('q10_s1_c') === 'nuit') score++;
-         if(getVal('q10_s2_a') === 'jour') score++;
-         if(getVal('q10_s2_b') === 'nuit') score++;
-         if(getVal('q10_s2_c') === 'nuit') score++;
-         if(getVal('q10_tour') === '24') score++;
-
-         if(score === 7) {
-             res.innerHTML = "✅ Bravo ! Tout est correct."; res.style.color = "#4ade80";
-         } else {
-             res.innerHTML = "❌ Tu as " + score + "/7 bonnes réponses."; res.style.color = "#f87171";
-         }
-      }
-
-      btnPlus6.onclick = plus6h;
-      btnReset.onclick = reset;
-      btnCheck.onclick = corriger;
-
-      setLabels();
-      placePoints();
+            let current = 0;
+            if(l1.isOn && !isLampPowered(l1, pSet, mSet)) current += VAL_L1;
+            if(l2.isOn && !isLampPowered(l2, pSet, mSet)) current += VAL_L2;
+            if(current > 0) m.measuredValue = current;
+        });
     }
 
-    function getChecked(n){ const e=document.querySelector('input[name="'+n+'"]:checked'); return e?e.value:null; }
-    window.addEventListener('resize', () => { 
-        if(typeof onResize1 === 'function') onResize1(); 
-        if(typeof onResize2 === 'function') onResize2(); 
+    // --- INIT ---
+    function init() {
+        components = [
+            new Component("gen", "Gen", 90, 80, "Géné"),
+            new Component("l1", "Lamp", 90, 200, "L1"),
+            new Component("l2", "Lamp", 90, 300, "L2"),
+            new Component("a1", "Multi", 90, 420, "A1"),
+            new Component("a2", "Multi", 90, 520, "A2"), 
+            new Component("a3", "Multi", 90, 620, "A3")
+        ];
+        draw();
+    }
+
+    // --- INPUT ---
+    function getMousePos(e) {
+        const r = canvas.getBoundingClientRect();
+        return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+    function getTerminalUnderMouse(mx, my) {
+        for(let c of components) {
+            const terms = c.getTerminals();
+            for(let key in terms) {
+                const t = terms[key];
+                if(Math.hypot(mx - t.x, my - t.y) < 20) return { c, id: t.id, x: t.x, y: t.y, color: t.color };
+            }
+        }
+        return null;
+    }
+    function getWireHandleUnderMouse(mx, my) {
+        for(let w of wires) {
+            if(w.cp && Math.hypot(mx - w.cp.x, my - w.cp.y) < 15) return w;
+        }
+        return null;
+    }
+    function getWireUnderMouse(mx, my) {
+        for(let w of wires) {
+            const p1 = getTermPos(w.startC, w.startId);
+            const p2 = getTermPos(w.endC, w.endId);
+            const cp = w.cp || {x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2};
+            for(let t=0; t<=1; t+=0.1) {
+                const x = (1-t)*(1-t)*p1.x + 2*(1-t)*t*cp.x + t*t*p2.x;
+                const y = (1-t)*(1-t)*p1.y + 2*(1-t)*t*cp.y + t*t*p2.y;
+                if(Math.hypot(mx-x, my-y) < 10) return w;
+            }
+        }
+        return null;
+    }
+
+    canvas.addEventListener('mousedown', e => {
+        mouse = getMousePos(e);
+        const wh = getWireHandleUnderMouse(mouse.x, mouse.y);
+        if(wh) { draggingHandle = wh; selectWire(wh); return; }
+        const term = getTerminalUnderMouse(mouse.x, mouse.y);
+        if(term) { drawingWire = true; wireStartTerm = term; selectWire(null); return; }
+        const gen = components.find(c => c.type === 'Gen');
+        if (gen.checkSwitchClick(mouse.x, mouse.y)) { analyzeCircuit(); draw(); return; }
+        const wClicked = getWireUnderMouse(mouse.x, mouse.y);
+        if(wClicked) { selectWire(wClicked); draw(); return; }
+        for(let i=components.length-1; i>=0; i--) {
+            if(components[i].contains(mouse.x, mouse.y)) {
+                draggingComp = components[i];
+                dragOffset = {x: mouse.x - draggingComp.x, y: mouse.y - draggingComp.y};
+                components.push(components.splice(i,1)[0]);
+                selectWire(null); break;
+            }
+        }
+        if(!draggingComp && !wClicked && !drawingWire && !draggingHandle) selectWire(null);
+        draw();
     });
-    // Au chargement, on affiche l'accueil (step 0)
-    window.onload = () => { 
-        showStep(0); 
-        initQ7(); 
-        initQ9(); 
-    };
+
+    window.addEventListener('mousemove', e => {
+        mouse = getMousePos(e);
+        if(draggingHandle) { draggingHandle.cp = {x: mouse.x, y: mouse.y}; draw(); return; }
+        if(draggingComp) {
+            draggingComp.x = mouse.x - dragOffset.x;
+            draggingComp.y = mouse.y - dragOffset.y;
+            draggingComp.x = Math.max(draggingComp.w/2, Math.min(canvas.width-draggingComp.w/2, draggingComp.x));
+            draggingComp.y = Math.max(draggingComp.h/2, Math.min(canvas.height-draggingComp.h/2, draggingComp.y));
+            analyzeCircuit();
+        }
+        let cursor = 'default';
+        if(getWireHandleUnderMouse(mouse.x, mouse.y)) cursor = 'pointer';
+        else if(getTerminalUnderMouse(mouse.x, mouse.y)) cursor = 'crosshair';
+        else if(components.find(c=>c.type==='Gen').contains(mouse.x, mouse.y) && mouse.x > components.find(c=>c.type==='Gen').x - 70 && mouse.x < components.find(c=>c.type==='Gen').x - 30) cursor = 'pointer'; 
+        else if(components.some(c=>c.contains(mouse.x,mouse.y))) cursor = 'grab';
+        else if(getWireUnderMouse(mouse.x, mouse.y)) cursor = 'pointer';
+        canvas.style.cursor = cursor;
+        draw();
+    });
+
+    window.addEventListener('mouseup', () => {
+        if(drawingWire && wireStartTerm) {
+            const term = getTerminalUnderMouse(mouse.x, mouse.y);
+            if(term && term.id !== wireStartTerm.id) {
+                const p1 = {x:wireStartTerm.x, y:wireStartTerm.y};
+                const p2 = {x:term.x, y:term.y};
+                const cp = { x: (p1.x+p2.x)/2, y: (p1.y+p2.y)/2 };
+                wires.push({ startId: wireStartTerm.id, endId: term.id, startC: wireStartTerm.c, endC: term.c, color: currentColor, cp: cp });
+                analyzeCircuit();
+            }
+        }
+        drawingWire = false; draggingComp = null; draggingHandle = null; draw();
+    });
+
+    window.addEventListener('keydown', (e) => { if((e.key === 'Delete' || e.key === 'Backspace') && selectedWire) deleteSelectedWire(); });
+    window.setColor = (c) => { currentColor = c; document.querySelectorAll('.color-selector').forEach(el => el.classList.toggle('active', el.title.toLowerCase().includes(c==='red'?'rouge':(c==='green'?'vert':'noir')))); };
+    function selectWire(w) { selectedWire = w; btnDel.style.opacity = selectedWire ? '1' : '0.5'; }
+    window.deleteSelectedWire = () => { if(selectedWire) { wires = wires.filter(w => w !== selectedWire); selectWire(null); analyzeCircuit(); draw(); } };
+    window.undoWire = () => { wires.pop(); selectWire(null); analyzeCircuit(); draw(); };
+    window.clearWires = () => { wires = []; selectWire(null); analyzeCircuit(); draw(); };
+
+    // --- DESSIN ---
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = '#e9ecef'; ctx.fillRect(0,0,SHELF_WIDTH,canvas.height);
+        ctx.strokeStyle = '#ced4da'; ctx.beginPath(); ctx.moveTo(SHELF_WIDTH,0); ctx.lineTo(SHELF_WIDTH,canvas.height); ctx.stroke();
+        ctx.fillStyle = '#adb5bd'; ctx.font="bold 14px Arial"; ctx.fillText("MATÉRIEL", 50, 30);
+
+        components.forEach(c => {
+            if(c.type === 'Gen') drawGen(c);
+            if(c.type === 'Lamp') drawLamp(c);
+            if(c.type === 'Multi') drawMulti(c);
+        });
+
+        let termCounts = {};
+        wires.forEach(w => {
+            let idxStart = termCounts[w.startId] || 0; termCounts[w.startId] = idxStart + 1;
+            let idxEnd = termCounts[w.endId] || 0; termCounts[w.endId] = idxEnd + 1;
+
+            const p1Base = getTermPos(w.startC, w.startId);
+            const p2Base = getTermPos(w.endC, w.endId);
+            
+            const offX = 3; const offY = -12; 
+            const p1 = { x: p1Base.x + (idxStart * offX), y: p1Base.y + (idxStart * offY) };
+            const p2 = { x: p2Base.x + (idxEnd * offX), y: p2Base.y + (idxEnd * offY) };
+
+            if(!w.cp) w.cp = {x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2};
+            
+            drawWireStack(p1, p2, w.cp, w.color, (w === selectedWire));
+        });
+
+        if(drawingWire) {
+            const p1 = {x: wireStartTerm.x, y: wireStartTerm.y};
+            const snap = getTerminalUnderMouse(mouse.x, mouse.y);
+            const p2 = snap ? {x: snap.x, y: snap.y} : mouse;
+            ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = (currentColor === 'black') ? COL_BLACK : (currentColor === 'red' ? COL_RED : COL_GREEN);
+            ctx.lineWidth = 4; ctx.setLineDash([5,5]); ctx.stroke(); ctx.setLineDash([]);
+        }
+        
+        if(!drawingWire && !draggingComp) {
+            const h = getTerminalUnderMouse(mouse.x, mouse.y);
+            if(h) { ctx.beginPath(); ctx.arc(h.x, h.y, 8, 0, Math.PI*2); ctx.strokeStyle = '#3498db'; ctx.lineWidth = 3; ctx.stroke(); }
+            const wh = getWireHandleUnderMouse(mouse.x, mouse.y);
+            if(wh || draggingHandle) {
+                const target = wh || draggingHandle;
+                ctx.beginPath(); ctx.arc(target.cp.x, target.cp.y, 6, 0, Math.PI*2);
+                ctx.fillStyle = 'white'; ctx.fill(); ctx.strokeStyle = '#2c3e50'; ctx.lineWidth=2; ctx.stroke();
+            }
+        }
+    }
+
+    function getTermPos(comp, termId) {
+        const terms = comp.getTerminals();
+        for(let k in terms) if(terms[k].id === termId) return terms[k];
+        return {x:0, y:0};
+    }
+
+    function drawWireStack(p1, p2, cp, color, selected=false) {
+        const visColor = (color === 'black') ? COL_BLACK : (color === 'red' ? COL_RED : COL_GREEN);
+        
+        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.quadraticCurveTo(cp.x, cp.y, p2.x, p2.y);
+        ctx.strokeStyle = visColor;
+        ctx.lineWidth = 6; ctx.lineCap = 'round';
+        
+        if(selected) { ctx.shadowColor = "#e67e22"; ctx.shadowBlur = 15; ctx.lineWidth = 8; } 
+        else { ctx.shadowColor = "rgba(0,0,0,0.3)"; ctx.shadowBlur = 5; ctx.shadowOffsetY = 3; }
+        ctx.stroke(); ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+        
+        if(!selected) { ctx.lineWidth = 2; ctx.strokeStyle = "rgba(255,255,255,0.2)"; ctx.stroke(); }
+        
+        drawBananaPlug(p1, color);
+        drawBananaPlug(p2, color);
+
+        if(selected) { ctx.beginPath(); ctx.arc(cp.x, cp.y, 5, 0, Math.PI*2); ctx.fillStyle = '#e67e22'; ctx.fill(); } 
+    }
+    
+    function drawBananaPlug(p, color) {
+        const visColor = (color === 'black') ? COL_BLACK : (color === 'red' ? COL_RED : COL_GREEN);
+        
+        ctx.fillStyle = visColor;
+        ctx.strokeStyle = (color === 'black') ? '#bbbbbb' : 'rgba(0,0,0,0.4)'; 
+        ctx.lineWidth = 1;
+        
+        ctx.beginPath();
+        ctx.roundRect(p.x - 7, p.y - 12, 14, 24, 4); 
+        ctx.fill(); ctx.stroke();
+        
+        ctx.fillStyle = '#1a1a1a'; 
+        ctx.beginPath(); ctx.arc(p.x, p.y - 7, 3.5, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = visColor; ctx.lineWidth = 1; ctx.stroke();
+    }
+
+    function drawGen(c) {
+        ctx.save(); ctx.translate(c.x, c.y);
+        drawRoundBox(-80,-55,160,110,10,'#2d3436'); 
+        ctx.fillStyle='#222'; ctx.fillRect(-60,-40,120,80);
+        ctx.fillStyle='black'; ctx.fillRect(-50,-10,20,30);
+        if(c.isGenOn) { ctx.fillStyle='#333'; ctx.fillRect(-50,-10,20,15); } else { ctx.fillStyle='#333'; ctx.fillRect(-50,5,20,15); }
+        ctx.beginPath(); ctx.arc(-15,5,6,0,Math.PI*2); 
+        if(c.isGenOn) { ctx.fillStyle='#ff3f34'; ctx.shadowColor='red'; ctx.shadowBlur=15; ctx.fill(); ctx.shadowBlur=0; } else { ctx.fillStyle='#500'; ctx.fill(); }
+        ctx.fillStyle = '#bdc3c7'; ctx.font = "bold 10px Arial"; ctx.textAlign = "center";
+        ctx.fillText("ON", -40, -15); ctx.fillText("OFF", -40, 32);
+        ctx.save(); ctx.translate(35,5); 
+        ctx.fillStyle = '#ecf0f1'; ctx.font="bold 9px Arial";
+        const voltages = ["3", "4.5", "6", "9", "12"];
+        const radius = 24;
+        for(let i=0; i<voltages.length; i++) {
+            const ang = Math.PI - (i * (Math.PI / (voltages.length - 1))); 
+            const tx = Math.cos(ang) * radius; const ty = -Math.sin(ang) * radius;
+            ctx.fillText(voltages[i], tx, ty);
+        }
+        ctx.beginPath(); ctx.arc(0,0,15,0,Math.PI*2); ctx.fillStyle='#333'; ctx.fill();
+        ctx.rotate(-0.5); ctx.fillStyle='#e67e22'; ctx.fillRect(-3,-3,6,-12);
+        ctx.restore();
+        drawT(8, 35, 'black', '-'); drawT(38, 35, 'red', '+');
+        ctx.restore();
+    }
+
+    function drawLamp(c) {
+        ctx.save(); ctx.translate(c.x, c.y);
+        drawRoundBox(-30,0,60,32,4,'#2d3436');
+        ctx.fillStyle='#bdc3c7'; ctx.fillRect(-10,-12,20,12);
+        ctx.strokeStyle='#7f8c8d'; ctx.beginPath(); ctx.moveTo(-10,-10); ctx.lineTo(10,-10); ctx.stroke();
+        ctx.translate(0,-12);
+        
+        ctx.beginPath(); ctx.arc(0,-20,24,0,Math.PI*2); 
+        
+        if(c.isOn) { 
+            // COULEURS MODIFIÉES POUR PÉDAGOGIE
+            let coreColor, haloColor, blurAmount;
+
+            if(c.currentIntensity >= 0.3) {
+                // FORTE : Jaune/Orange saturé ("Foncé" visuellement)
+                coreColor = '#f39c12';
+                haloColor = '#f1c40f';
+                blurAmount = 50;
+            } else {
+                // FAIBLE : Jaune très pâle / Crème ("Clair")
+                coreColor = '#fff9c4'; 
+                haloColor = 'rgba(255, 255, 200, 0.5)';
+                blurAmount = 15;
+            }
+
+            // Halo externe
+            ctx.shadowColor = haloColor; 
+            ctx.shadowBlur = blurAmount; 
+            ctx.fillStyle = coreColor;
+            ctx.fill(); 
+            
+            // Halo interne
+            ctx.shadowBlur = 10; 
+            ctx.fillStyle = coreColor; 
+            ctx.fill(); 
+        } else { 
+            ctx.fillStyle = 'rgba(230,240,255,0.4)'; ctx.fill(); ctx.strokeStyle = '#bdc3c7'; ctx.lineWidth=1; ctx.stroke(); 
+            ctx.beginPath(); ctx.arc(-8,-30,4,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.fill(); 
+        }
+        ctx.shadowBlur = 0; ctx.translate(0,12);
+        drawT(-20, 15, 'black'); drawT(20, 15, 'black');
+        ctx.fillStyle='#ecf0f1'; ctx.font="bold 12px Arial"; ctx.fillText(c.label, -8, 28);
+        ctx.restore();
+    }
+
+    function drawMulti(c) {
+        ctx.save(); ctx.translate(c.x, c.y);
+        const scale = 0.7; ctx.scale(scale, scale);
+        drawRoundBox(-60,-90,120,200,10,'#ecf0f1');
+        ctx.fillStyle='#95a5a6'; ctx.fillRect(-60,-50,5,120); ctx.fillRect(55,-50,5,120);
+        ctx.fillStyle='#bdc3c7'; ctx.fillRect(-50,-80,100,45);
+        ctx.fillStyle='#2c3e50'; ctx.font="bold 26px monospace"; 
+        let txt = "0.00"; if(c.measuredValue > 0 && components.find(x=>x.type==='Gen').isGenOn) txt = c.measuredValue.toFixed(2);
+        ctx.fillText(txt, -30, -48);
+        ctx.lineWidth=10; 
+        ctx.beginPath(); ctx.arc(0,10,40,Math.PI*0.6, Math.PI*1.1); ctx.strokeStyle='#e056fd'; ctx.stroke(); 
+        ctx.beginPath(); ctx.arc(0,10,40,Math.PI*1.1, Math.PI*2.1); ctx.strokeStyle='#3498db'; ctx.stroke(); 
+        ctx.beginPath(); ctx.arc(0,10,40,Math.PI*2.1, Math.PI*2.6); ctx.strokeStyle='#2ecc71'; ctx.stroke(); 
+        ctx.lineWidth=1; ctx.strokeStyle='#ccc';
+        ctx.beginPath(); ctx.arc(0,10,25,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill(); ctx.stroke();
+        ctx.save(); ctx.translate(0,10); ctx.rotate(Math.PI*0.8); ctx.fillStyle='#999'; ctx.beginPath(); ctx.moveTo(0,-20); ctx.lineTo(-5,0); ctx.lineTo(5,0); ctx.fill(); ctx.restore();
+        ctx.scale(1/scale, 1/scale);
+        drawT(-15, 50, 'black', 'COM'); drawT(25, 50, 'yellow', '10A');
+        ctx.fillStyle='#7f8c8d'; ctx.font="bold 10px Arial"; ctx.fillText(c.label, 0, -5);
+        ctx.restore();
+    }
+
+    function drawRoundBox(x,y,w,h,r,fill) { ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(x,y,w,h,r); else ctx.rect(x,y,w,h); ctx.fillStyle=fill; ctx.fill(); ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=1; ctx.stroke(); }
+    function drawT(x,y,c,l) { ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fillStyle = c==='red'?'#c0392b':(c==='black'?'#2d3436':'#f1c40f'); ctx.fill(); ctx.beginPath(); ctx.arc(x,y,2,0,Math.PI*2); ctx.fillStyle='#ccc'; ctx.fill(); if(l) { ctx.fillStyle='#555'; ctx.font="9px Arial"; ctx.fillText(l, x, y-10); } }
+    if (!ctx.roundRect) ctx.roundRect = function(x,y,w,h,r){this.rect(x,y,w,h)};
+    init();
+
 </script>
 </body>
 </html>
