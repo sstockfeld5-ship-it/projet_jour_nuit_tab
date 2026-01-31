@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Module : Ombres et Rotation - Version Finale Sans Bug</title>
+    <title>Module : Ombres et Rotation - Version Finale Optimisée Mobile</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         /* FIX GLOBAL */
@@ -138,11 +138,45 @@
         .q5rev-earth { position: absolute; left: 0; top: 0; width: 36px; height: 36px; border-radius: 50%; transform: translateX(var(--r)); background: radial-gradient(circle at 30% 30%, #bfe7ff, #1e4fd8); box-shadow: 0 0 10px rgba(110, 170, 255, .4); }
         .q5rev-earth::after { content: ""; position: absolute; left: 50%; top: 0; width: 2px; height: 100%; margin-left: -1px; background: rgba(255, 255, 255, .7); }
 
-        /* Q6/Q7 Globe Styles */
-        .q7stage { position:relative; width:100%; height:320px; display:flex; justify-content:center; align-items:center; overflow:hidden; background: #000; border-radius:12px; border:1px solid #333; margin-bottom: 15px; }
-        .q7sun { position:absolute; left:-40px; top:50%; transform:translateY(-50%); width:120px; height:120px; border-radius:50%; background:radial-gradient(circle,#ffe9a3,#f59e0b 70%); box-shadow:0 0 40px rgba(245,158,11,.6); z-index:2; }
-        .q7ray { position:absolute; left:20px; top:50%; transform:translateY(-50%); width:100%; height:140px; background:linear-gradient(90deg, rgba(255,233,163,0.1), transparent); pointer-events:none; }
-        .q7earth { position:relative; width:220px; height:220px; border-radius:50%; overflow:hidden; border:2px solid rgba(255,255,255,.2); box-shadow:0 0 50px rgba(0,0,0,.8); background:#1f6f8b; z-index:5; margin-left: 80px; }
+        /* --- Q6/Q7 Globe Styles (RÉDUITS ET OPTIMISÉS MOBILE) --- */
+        .q7stage { 
+            position:relative; width:100%; height:240px; /* Réduit de 320px à 240px */
+            display:flex; justify-content:center; align-items:center; 
+            overflow:hidden; background: #000; border-radius:12px; border:1px solid #333; margin-bottom: 15px; 
+        }
+        
+        /* Soleil Réduit (80px) */
+        .q7sun { 
+            position:absolute; left:-20px; top:50%; transform:translateY(-50%); 
+            width:80px; height:80px; 
+            border-radius:50%; background:radial-gradient(circle,#ffe9a3,#f59e0b 70%); 
+            box-shadow:0 0 40px rgba(245,158,11,.6); z-index:2; 
+        }
+        
+        /* Rayons Ajustés */
+        .q7ray { 
+            position:absolute; left:40px; top:50%; transform:translateY(-50%); 
+            width:120px; height:120px; 
+            background:linear-gradient(90deg, rgba(255,233,163,0.1), transparent); pointer-events:none; 
+        }
+        
+        /* Terre Réduite (150px) et décalée */
+        .q7earth { 
+            position:relative; width:150px; height:150px; 
+            border-radius:50%; overflow:hidden; 
+            border:2px solid rgba(255,255,255,.2); 
+            box-shadow:0 0 50px rgba(0,0,0,.8); background:#1f6f8b; 
+            z-index:5; margin-left: 60px; /* Décalage pour laisser place au soleil */
+        }
+        
+        /* Compteur d'heure placé DANS la scène, à côté de la Terre */
+        .q6-overlay-clock {
+            position: absolute; right: 10px; top: 10px;
+            background: rgba(255,255,255,0.1); padding: 5px 10px;
+            border-radius: 15px; border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; font-weight: bold; font-size: 14px;
+            z-index: 100;
+        }
         
         .q7surf { 
             position:absolute; inset:-10%; width:140%; height:120%; 
@@ -155,25 +189,20 @@
         }
         .q7shine { position:absolute; inset:0; background:radial-gradient(circle at 30% 40%, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 60%); mix-blend-mode:overlay; pointer-events:none; z-index: 6; }
         
-        /* OMBRE : 0.15 (Très transparente) */
+        /* OMBRE : 0.15 */
         .q7night { 
             position:absolute; inset:0; width:160%; height:100%; left:-30%;
             background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 48.8%, rgba(0,0,0,.60) 51.2%, rgba(0,0,0,.60) 100%);
             mix-blend-mode: multiply; pointer-events:none; z-index: 30; 
         }
         
-        /* CORRECTION : Trajectoire au-dessus de l'ombre (z-index 35) */
         .q7track { position:absolute; inset:0; pointer-events:none; z-index: 35; }
         .q7track svg { width:100%; height:100%; display:block; }
         .q7tb { stroke:rgba(255,77,141,.40); stroke-width:3; stroke-dasharray:6 5; fill:none; }
-        
-        /* CORRECTION : On définit fill:none pour éviter le disque noir */
         .q7tfGlow { stroke:rgba(255,77,141,.25); stroke-width:10; fill:none; }
-        
         .q7tf { stroke:rgba(255,77,141,1); stroke-width:4; fill:none; }
         
-        /* Marker au-dessus de l'ombre (z-index 36) */
-        .q7marker { position:absolute; width:14px; height:14px; border-radius:50%; background:#ff4d8d; box-shadow:0 0 0 3px #fff; transform:translate(-50%,-50%); z-index:36; }
+        .q7marker { position:absolute; width:10px; height:10px; border-radius:50%; background:#ff4d8d; box-shadow:0 0 0 3px #fff; transform:translate(-50%,-50%); z-index:36; }
         .q7equator { position:absolute; left:-10%; top:50%; width:120%; height:2px; background:rgba(255,255,255,.22); transform:translateY(-50%); pointer-events:none; }
 
         /* Q7 (Index Ordi) Styles */
@@ -319,7 +348,10 @@
             </div>
             <div class="animWrap" style="height:auto; background:rgba(255,255,255,0.05); border:none; padding: 20px;">
                 <p>Combien de temps met la Terre pour faire un tour complet autour du Soleil ?</p>
-                <div class="row" style="margin-bottom:10px;"><input class="inputNum" id="revAns" type="number" placeholder="nombre" style="padding:10px; border-radius:8px; border:1px solid #555; background:#222; color:white; width: 100px;"><select id="revUnit" style="padding:10px; border-radius:8px;"><option value="">unité</option><option value="s">s</option><option value="h">h</option><option value="jour">jour</option><option value="annees">années</option></select></div>
+                <div class="row" style="margin-bottom:10px;">
+                    <input class="inputNum" id="revAns" type="number" placeholder="nombre" style="padding:10px; border-radius:8px; border:1px solid #555; background:#222; color:white; width: 100px;">
+                    <select id="revUnit" style="padding:10px; border-radius:8px; border: 1px solid transparent;"><option value="">unité</option><option value="s">s</option><option value="h">h</option><option value="jour">jour</option><option value="annees">années</option></select>
+                </div>
                 <button class="btn primary" onclick="checkRev()">Valider</button>
                 <div class="status" id="st4"></div>
             </div>
@@ -344,12 +376,10 @@
         <div class="instruction-box"><p><strong>Consigne :</strong> Fais tourner la Terre et observe le mouvement de la ville localisée par un point rouge. Réponds ensuite à la question.</p></div>
         
         <div id="q6AnimWrap" class="anim-wrap" style="height:auto; padding:20px; display:flex; flex-direction:column; gap:15px; background:#0b1020;">
-            <div class="row" style="justify-content:space-between; color:white;">
-                <strong>Boule éclairée</strong>
-                <span class="pill" id="modLbl" style="background:rgba(255,255,255,0.1); padding:5px 10px; border-radius:15px;">Heure : 0</span>
-            </div>
             
             <div aria-label="Modèle jour nuit" class="q7stage">
+                <div class="q6-overlay-clock" id="modLbl">Heure : 0</div>
+
                 <div aria-hidden="true" class="q7sun"></div>
                 <div aria-hidden="true" class="q7ray"></div>
                 <div aria-label="Globe illustré avec alternance jour/nuit et repère" class="q7earth" id="q7Earth" role="img">
@@ -679,6 +709,22 @@
     function checkRev(){ 
         const n=document.getElementById('revAns').value; 
         const u=document.getElementById('revUnit').value; 
+        const uEl = document.getElementById('revUnit');
+
+        if(!n) {
+            document.getElementById('st4').innerHTML = "<span style='color:#f87171'>❌ Écris un nombre.</span>"; 
+            document.getElementById('st4').style.display = "block";
+            return;
+        }
+
+        if(!u) {
+             uEl.style.border = "2px solid #f87171";
+             setTimeout(() => uEl.style.border = "1px solid transparent", 2000);
+             document.getElementById('st4').innerHTML = "<span style='color:#f87171'>❌ Clique sur 'unité' pour choisir (jour, année...).</span>"; 
+             document.getElementById('st4').style.display = "block";
+             return;
+        }
+
         const ok = (u==='jour' && Math.abs(n-365)<=10) || (u==='annees' && Math.abs(n-1)<=0.1); 
         document.getElementById('st4').innerHTML = ok ? "<span style='color:#4ade80'>✅ Correct : 365 jours</span>" : "<span style='color:#f87171'>❌ Réessaie.</span>"; 
         document.getElementById('st4').style.display = "block"; 
@@ -697,14 +743,15 @@
             const t = (h/24)*Math.PI*2; 
             const bx = ((-(h/24)*100) % 100);
             earth.style.setProperty('--bx', bx.toFixed(2) + '%');
-            const cx=110, cy=110, northShift=44, Rx=88, Ry=22;
+            // Recalculé pour taille 150px (Radius 75)
+            const cx=75, cy=75, northShift=30, Rx=60, Ry=15;
             const x = cx + Math.cos(t)*Rx;
             const y = (cy - northShift) + Math.sin(t)*Ry;
             const z = Math.sin(t);
             const scale = 0.72 + (z+1)*0.18;
             const alpha = 0.30 + (z+1)*0.35;
-            mk.style.left = (x/220*100) + '%';
-            mk.style.top  = (y/220*100) + '%';
+            mk.style.left = (x/150*100) + '%';
+            mk.style.top  = (y/150*100) + '%';
             mk.style.transform = 'translate(-50%,-50%) scale(' + scale.toFixed(3) + ')';
             mk.style.opacity = alpha.toFixed(3);
         }
