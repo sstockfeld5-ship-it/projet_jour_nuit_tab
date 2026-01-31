@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Module : Ombres et Rotation - Version Finale Transparence Max</title>
+    <title>Module : Ombres et Rotation - Version Finale Sans Bug</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         /* FIX GLOBAL */
@@ -143,14 +143,37 @@
         .q7sun { position:absolute; left:-40px; top:50%; transform:translateY(-50%); width:120px; height:120px; border-radius:50%; background:radial-gradient(circle,#ffe9a3,#f59e0b 70%); box-shadow:0 0 40px rgba(245,158,11,.6); z-index:2; }
         .q7ray { position:absolute; left:20px; top:50%; transform:translateY(-50%); width:100%; height:140px; background:linear-gradient(90deg, rgba(255,233,163,0.1), transparent); pointer-events:none; }
         .q7earth { position:relative; width:220px; height:220px; border-radius:50%; overflow:hidden; border:2px solid rgba(255,255,255,.2); box-shadow:0 0 50px rgba(0,0,0,.8); background:#1f6f8b; z-index:5; margin-left: 80px; }
-        .q7surf { position:absolute; inset:-10%; width:140%; height:120%; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1024' height='512' viewBox='0 0 1024 512'><rect width='1024' height='512' fill='%231f6f8b'/><path d='M150,260 C220,210 280,210 330,250 C350,275 360,315 330,340 C290,375 235,382 200,350 C175,330 150,310 135,295 Z' fill='%2363c76a' opacity='0.9'/><path d='M610,255 C650,220 720,220 770,255 C800,275 805,315 775,335 C720,368 655,360 628,330 C610,312 595,285 600,272 Z' fill='%2363c76a' opacity='0.9'/></svg>"); background-size: 200% 100%; background-repeat: repeat-x; background-position: var(--bx, 0%) 50%; filter: saturate(1.2) contrast(1.1); }
+        
+        .q7surf { 
+            position:absolute; inset:-10%; width:140%; height:120%; 
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1024' height='512' viewBox='0 0 1024 512'><rect width='1024' height='512' fill='%231f6f8b'/><path d='M150,260 C220,210 280,210 330,250 C350,275 360,315 330,340 C290,375 235,382 200,350 C175,330 150,310 135,295 Z' fill='%2363c76a' opacity='0.9'/><path d='M610,255 C650,220 720,220 770,255 C800,275 805,315 775,335 C720,368 655,360 628,330 C610,312 595,285 600,272 Z' fill='%2363c76a' opacity='0.9'/></svg>"); 
+            background-size: 220% 100%; 
+            background-repeat: repeat-x; 
+            background-position: var(--bx, 0%) 50%; 
+            transform: translateX(-10%);
+            filter: saturate(1.2) contrast(1.1); 
+        }
         .q7shine { position:absolute; inset:0; background:radial-gradient(circle at 30% 40%, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 60%); mix-blend-mode:overlay; pointer-events:none; z-index: 6; }
-        .q7night { position:absolute; inset:0; background: linear-gradient(to right, transparent 48%, rgba(0,0,0,0.9) 52%); pointer-events:none; z-index: 30; mix-blend-mode: multiply; }
-        .q7track { position:absolute; inset:0; pointer-events:none; z-index: 8; }
+        
+        /* OMBRE : 0.15 (Très transparente) */
+        .q7night { 
+            position:absolute; inset:0; width:160%; height:100%; left:-30%;
+            background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 48.8%, rgba(0,0,0,.60) 51.2%, rgba(0,0,0,.60) 100%);
+            mix-blend-mode: multiply; pointer-events:none; z-index: 30; 
+        }
+        
+        /* CORRECTION : Trajectoire au-dessus de l'ombre (z-index 35) */
+        .q7track { position:absolute; inset:0; pointer-events:none; z-index: 35; }
         .q7track svg { width:100%; height:100%; display:block; }
-        .q7tb { stroke:rgba(255,255,255,0.4); stroke-width:3; stroke-dasharray:5 5; fill:none; }
-        .q7tf { stroke:#ff4d8d; stroke-width:4; fill:none; }
-        .q7marker { position:absolute; width:14px; height:14px; border-radius:50%; background:#ff4d8d; box-shadow:0 0 0 3px #fff; transform:translate(-50%,-50%); z-index:10; }
+        .q7tb { stroke:rgba(255,77,141,.40); stroke-width:3; stroke-dasharray:6 5; fill:none; }
+        
+        /* CORRECTION : On définit fill:none pour éviter le disque noir */
+        .q7tfGlow { stroke:rgba(255,77,141,.25); stroke-width:10; fill:none; }
+        
+        .q7tf { stroke:rgba(255,77,141,1); stroke-width:4; fill:none; }
+        
+        /* Marker au-dessus de l'ombre (z-index 36) */
+        .q7marker { position:absolute; width:14px; height:14px; border-radius:50%; background:#ff4d8d; box-shadow:0 0 0 3px #fff; transform:translate(-50%,-50%); z-index:36; }
         .q7equator { position:absolute; left:-10%; top:50%; width:120%; height:2px; background:rgba(255,255,255,.22); transform:translateY(-50%); pointer-events:none; }
 
         /* Q7 (Index Ordi) Styles */
@@ -162,7 +185,6 @@
             background-size:200% 100%; background-repeat:repeat-x; background-position: var(--bx, 0%) 50%; 
         }
         
-        /* CORRECTION Q6 : Ombre très transparente (0.15) pour bien voir la trajectoire */
         .overlay-night, #q8Step .daynight, #q10Earth .q10-daynight { 
             position:absolute; inset:0; 
             background: linear-gradient(to right, transparent 50%, rgba(0,0,0,0.15) 50%); 
@@ -335,14 +357,14 @@
                     <div aria-hidden="true" class="q7shine"></div>
                     <div aria-hidden="true" class="q7night"></div>
                     <div aria-hidden="true" class="q7equator"></div>
-                    <div aria-hidden="true" class="q7track" id="q7Track">
+                    <div class="q7track" id="q7Track" style="z-index: 35;">
                         <svg preserveAspectRatio="none" viewBox="0 0 220 220">
                             <path class="q7tb" d="M 22 66 A 88 22 0 0 1 198 66"></path>
                             <path class="q7tfGlow" d="M 198 66 A 88 22 0 0 1 22 66"></path>
                             <path class="q7tf" d="M 198 66 A 88 22 0 0 1 22 66"></path>
                         </svg>
                     </div>
-                    <div class="q7marker" id="q7Marker" title="Ville"></div>
+                    <div class="q7marker" id="q7Marker" title="Ville" style="z-index: 36;"></div>
                 </div>
             </div>
 
