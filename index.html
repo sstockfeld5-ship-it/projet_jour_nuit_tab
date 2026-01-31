@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Module : Ombres et Rotation - Version Finale Optimisée Mobile</title>
+    <title>Module : Ombres et Rotation - Version Finale</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         /* FIX GLOBAL */
@@ -138,38 +138,30 @@
         .q5rev-earth { position: absolute; left: 0; top: 0; width: 36px; height: 36px; border-radius: 50%; transform: translateX(var(--r)); background: radial-gradient(circle at 30% 30%, #bfe7ff, #1e4fd8); box-shadow: 0 0 10px rgba(110, 170, 255, .4); }
         .q5rev-earth::after { content: ""; position: absolute; left: 50%; top: 0; width: 2px; height: 100%; margin-left: -1px; background: rgba(255, 255, 255, .7); }
 
-        /* --- Q6/Q7 Globe Styles (RÉDUITS ET OPTIMISÉS MOBILE) --- */
+        /* Q6/Q7 Globe Styles */
         .q7stage { 
-            position:relative; width:100%; height:240px; /* Réduit de 320px à 240px */
+            position:relative; width:100%; height:240px; 
             display:flex; justify-content:center; align-items:center; 
             overflow:hidden; background: #000; border-radius:12px; border:1px solid #333; margin-bottom: 15px; 
         }
-        
-        /* Soleil Réduit (80px) */
         .q7sun { 
             position:absolute; left:-20px; top:50%; transform:translateY(-50%); 
             width:80px; height:80px; 
             border-radius:50%; background:radial-gradient(circle,#ffe9a3,#f59e0b 70%); 
             box-shadow:0 0 40px rgba(245,158,11,.6); z-index:2; 
         }
-        
-        /* Rayons Ajustés */
         .q7ray { 
             position:absolute; left:40px; top:50%; transform:translateY(-50%); 
             width:120px; height:120px; 
             background:linear-gradient(90deg, rgba(255,233,163,0.1), transparent); pointer-events:none; 
         }
-        
-        /* Terre Réduite (150px) et décalée */
         .q7earth { 
             position:relative; width:150px; height:150px; 
             border-radius:50%; overflow:hidden; 
             border:2px solid rgba(255,255,255,.2); 
             box-shadow:0 0 50px rgba(0,0,0,.8); background:#1f6f8b; 
-            z-index:5; margin-left: 60px; /* Décalage pour laisser place au soleil */
+            z-index:5; margin-left: 60px;
         }
-        
-        /* Compteur d'heure placé DANS la scène, à côté de la Terre */
         .q6-overlay-clock {
             position: absolute; right: 10px; top: 10px;
             background: rgba(255,255,255,0.1); padding: 5px 10px;
@@ -189,7 +181,6 @@
         }
         .q7shine { position:absolute; inset:0; background:radial-gradient(circle at 30% 40%, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 60%); mix-blend-mode:overlay; pointer-events:none; z-index: 6; }
         
-        /* OMBRE : 0.15 */
         .q7night { 
             position:absolute; inset:0; width:160%; height:100%; left:-30%;
             background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 48.8%, rgba(0,0,0,.60) 51.2%, rgba(0,0,0,.60) 100%);
@@ -264,7 +255,7 @@
     <div class="intro-card">
         <div class="visual-decoration">🌍</div>
         <h1 class="intro-title">Ombres & Mouvements</h1>
-        <h2 class="intro-subtitle">Niveau 6e (Cycle 3 : CM1, CM2)</h2>
+        <h2 class="intro-subtitle">Niveau 6e</h2>
         <ul class="intro-list">
             <li>Découvrir les <strong>ombres propres</strong> et <strong>portées</strong>.</li>
             <li>Comprendre la <strong>rotation</strong> de la Terre sur elle-même.</li>
@@ -743,7 +734,6 @@
             const t = (h/24)*Math.PI*2; 
             const bx = ((-(h/24)*100) % 100);
             earth.style.setProperty('--bx', bx.toFixed(2) + '%');
-            // Recalculé pour taille 150px (Radius 75)
             const cx=75, cy=75, northShift=30, Rx=60, Ry=15;
             const x = cx + Math.cos(t)*Rx;
             const y = (cy - northShift) + Math.sin(t)*Ry;
